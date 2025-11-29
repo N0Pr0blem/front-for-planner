@@ -63,17 +63,21 @@ class _MembersPageState extends State<MembersPage> {
   }
 
   Future<void> _loadMembers(int projectId) async {
-    try {
-      final members = await ProjectMemberService().getProjectMembers(projectId);
-      setState(() {
-        _members = members;
-      });
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Ошибка загрузки участников: $e')),
-      );
-    }
+  try {
+    print('Loading members for project: $projectId');
+    final members = await ProjectMemberService().getProjectMembers(projectId);
+    print('Successfully loaded ${members.length} members');
+    
+    setState(() {
+      _members = members;
+    });
+  } catch (e) {
+    print('Error loading members: $e');
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('Ошибка загрузки участников: $e')),
+    );
   }
+}
 
   void _selectMember(ProjectMemberResponse member) {
     setState(() {

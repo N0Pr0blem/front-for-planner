@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import '../dto/project/project_member_response.dart';
 import '../theme/colors.dart';
-import 'dart:convert';
-import 'invite_member_dialog.dart'; // Добавляем импорт
+import 'invite_member_dialog.dart';
+import 'dart:convert'; 
 
 class MembersListPanel extends StatefulWidget {
   final int projectId;
@@ -32,20 +32,10 @@ class _MembersListPanelState extends State<MembersListPanel> {
   @override
   void initState() {
     super.initState();
-    if (widget.members.isEmpty) {
-      _loadInitialMembers();
-    }
-  }
-
-  Future<void> _loadInitialMembers() async {
-    try {
-      if (widget.onMembersUpdated != null) {
-        widget.onMembersUpdated!();
-      }
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Ошибка загрузки участников: $e')),
-      );
+    print('🎯 MembersListPanel initialized with ${widget.members.length} members');
+    for (var i = 0; i < widget.members.length; i++) {
+      final member = widget.members[i];
+      print('🎯 Member $i: ${member.user.fullName} - ${member.user.firstName} ${member.user.secondName}');
     }
   }
 
@@ -55,6 +45,7 @@ class _MembersListPanelState extends State<MembersListPanel> {
         widget.onMembersUpdated!();
       }
     } catch (e) {
+      print('Error in _refreshMembers: $e');
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Ошибка обновления участников: $e')),
       );
@@ -65,7 +56,7 @@ class _MembersListPanelState extends State<MembersListPanel> {
     showDialog(
       context: context,
       builder: (BuildContext context) {
-        return InviteMemberDialog( // Используем именованный класс
+        return InviteMemberDialog(
           projectId: widget.projectId,
           onMemberInvited: () {
             _refreshMembers();
@@ -159,9 +150,6 @@ class _MembersListPanelState extends State<MembersListPanel> {
                       ),
                     ),
                     style: const TextStyle(fontSize: 14),
-                    onChanged: (value) {
-                      // Можно добавить фильтрацию
-                    },
                   ),
                 ),
               ),
@@ -172,42 +160,60 @@ class _MembersListPanelState extends State<MembersListPanel> {
           Expanded(
             child: RefreshIndicator(
               onRefresh: _refreshMembers,
-              child: widget.members.isEmpty
-                  ? const Center(
-                      child: Text(
-                        'Нет участников',
-                        style: TextStyle(
-                          color: AppColors.textHint,
-                          fontSize: 16,
-                        ),
-                      ),
-                    )
-                  : ListView.builder(
-                      itemCount: widget.members.length,
-                      itemBuilder: (context, index) {
-                        final member = widget.members[index];
-                        final isSelected = member.id.toString() == widget.selectedMemberId;
-                        return _MemberListItem(
-                          member: member,
-                          isSelected: isSelected,
-                          onTap: () => widget.onMemberSelected(member),
-                        );
-                      },
-                    ),
+              child: _buildMembersList(),
             ),
           ),
         ],
       ),
     );
   }
+
+  Widget _buildMembersList() {
+    if (widget.members.isEmpty) {
+      return const Center(
+        child: Text(
+          'Нет участников',
+          style: TextStyle(
+            color: AppColors.textHint,
+            fontSize: 16,
+          ),
+        ),
+      );
+    }
+
+    return ListView.builder(
+      itemCount: widget.members.length,
+      itemBuilder: (context, index) {
+        final member = widget.members[index];
+        
+        print('🎯 Building member $index: ${member.user.fullName}');
+        
+        // Безопасная проверка
+        try {
+          final isSelected = member.id.toString() == widget.selectedMemberId;
+          return _SafeMemberListItem(
+            member: member,
+            isSelected: isSelected,
+            onTap: () => widget.onMemberSelected(member),
+          );
+        } catch (e) {
+          print('❌ Error building member item at index $index: $e');
+          return _ErrorMemberListItem(
+            error: e.toString(),
+            index: index,
+          );
+        }
+      },
+    );
+  }
 }
 
-class _MemberListItem extends StatelessWidget {
+class _SafeMemberListItem extends StatelessWidget {
   final ProjectMemberResponse member;
   final bool isSelected;
   final VoidCallback onTap;
 
-  const _MemberListItem({
+  const _SafeMemberListItem({
     Key? key,
     required this.member,
     required this.isSelected,
@@ -216,6 +222,8 @@ class _MemberListItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    print('🎯 Rendering member: ${member.user.fullName}');
+    
     return Container(
       margin: const EdgeInsets.only(bottom: 8),
       decoration: BoxDecoration(
@@ -245,23 +253,8 @@ class _MemberListItem extends StatelessWidget {
             child: Row(
               children: [
                 // Аватар
-                if (member.user.hasAvatar)
-                  ClipOval(
-                    child: Image.memory(
-                      base64Decode(member.user.profileImage!),
-                      width: 40,
-                      height: 40,
-                      fit: BoxFit.cover,
-                      errorBuilder: (context, error, stackTrace) {
-                        return _defaultAvatar();
-                      },
-                    ),
-                  )
-                else
-                  _defaultAvatar(),
-                
+                _buildAvatar(),
                 const SizedBox(width: 12),
-                
                 // Информация
                 Expanded(
                   child: Column(
@@ -292,6 +285,28 @@ class _MemberListItem extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  Widget _buildAvatar() {
+    try {
+      if (member.user.hasAvatar) {
+        return ClipOval(
+          child: Image.memory(
+            base64Decode(member.user.profileImage!),
+            width: 40,
+            height: 40,
+            fit: BoxFit.cover,
+            errorBuilder: (context, error, stackTrace) {
+              print('❌ Error loading avatar: $error');
+              return _defaultAvatar();
+            },
+          ),
+        );
+      }
+    } catch (e) {
+      print('❌ Error in _buildAvatar: $e');
+    }
+    return _defaultAvatar();
   }
 
   Widget _defaultAvatar() {
@@ -329,5 +344,54 @@ class _MemberListItem extends StatelessWidget {
       default:
         return role;
     }
+  }
+}
+
+class _ErrorMemberListItem extends StatelessWidget {
+  final String error;
+  final int index;
+
+  const _ErrorMemberListItem({
+    Key? key,
+    required this.error,
+    required this.index,
+  }) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 8),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Colors.red.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.red),
+      ),
+      child: Row(
+        children: [
+          Icon(Icons.error, color: Colors.red),
+          SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Error loading member $index',
+                  style: TextStyle(
+                    color: Colors.red,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                Text(
+                  error,
+                  style: TextStyle(color: Colors.red, fontSize: 12),
+                  maxLines: 2,
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
   }
 }
