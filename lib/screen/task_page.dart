@@ -233,6 +233,10 @@ class _TasksPageState extends State<TasksPage> {
         hourSum: 0.0,
       );
 
+  void _navigateToMembers() {
+    Navigator.pushReplacementNamed(context, '/members');
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -247,9 +251,14 @@ class _TasksPageState extends State<TasksPage> {
             child: Row(
               children: [
                 // 1. Навигационная панель
-                const SizedBox(
+                SizedBox(
                   width: 100,
-                  child: NavigationPanel(),
+                  child: NavigationPanel(
+                    isTasksActive: true,
+                    isMembersActive: false,
+                    onTasksTap: () {}, // Ничего не делаем, т.к. мы уже на этой странице
+                    onMembersTap: _navigateToMembers,
+                  ),
                 ),
 
                 // 2. Список задач
@@ -277,7 +286,9 @@ class _TasksPageState extends State<TasksPage> {
                           ),
                         )
                 else
-                  const Center(child: Text('No project selected')),
+                  const Expanded(
+                    child: Center(child: Text('No project selected')),
+                  ),
 
                 // 3. Детали задачи
                 if (_isTaskSelected)
@@ -339,7 +350,7 @@ class _TasksPageState extends State<TasksPage> {
         trekking: _currentTrekking,
         onTrekkingUpdated: _refreshTrekking,
         projectId: _selectedProject!.id,
-        onEdit: _startEditing, // ← ДОБАВЬТЕ ЭТОТ КОЛБЭК
+        onEdit: _startEditing,
       );
     } else {
       return Container(color: Colors.white);
