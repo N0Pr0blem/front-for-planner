@@ -5,6 +5,7 @@ import 'screen/auth/login_screen.dart';
 import 'screen/auth/register_screen.dart';
 import 'screen/auth/verification_screen.dart';
 import 'screen/not_found_screen.dart';
+import 'package:your_app_name/screen/profile_page.dart';
 
 void main() {
   runApp(const MyApp());
@@ -33,6 +34,8 @@ class MyApp extends StatelessWidget {
             return MaterialPageRoute(builder: (context) => const TasksPage());
           case '/members':
             return MaterialPageRoute(builder: (context) => const MembersPage());
+          case '/profile': // Добавьте этот case
+            return MaterialPageRoute(builder: (context) => const ProfilePage());
           case '/verify':
             final args = settings.arguments as Map<String, dynamic>?;
             return MaterialPageRoute(

@@ -251,4 +251,20 @@ class TaskService {
       throw Exception('Failed to create task: ${response.statusCode}');
     }
   }
+  static Future<List<TaskResponse>> getMyTasks() async {
+  final token = await TokenStorage.getToken();
+  final response = await http.get(
+    Uri.parse('$baseUrl/api/v1/task/my'),
+    headers: {
+      'Authorization': 'Bearer $token',
+    },
+  );
+
+  if (response.statusCode == 200) {
+    final List<dynamic> data = jsonDecode(response.body);
+    return data.map((json) => TaskResponse.fromJson(json)).toList();
+  } else {
+    throw Exception('Failed to load my tasks: ${response.statusCode}');
+  }
+}
 }

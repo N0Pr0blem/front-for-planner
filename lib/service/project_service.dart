@@ -31,4 +31,50 @@ class ProjectService {
       throw Exception('Failed to load projects: ${response.statusCode}');
     }
   }
+  Future<List<ProjectResponse>> getMyProjects() async {
+  final token = await TokenStorage.getToken();
+  final response = await http.get(
+    Uri.parse('$baseUrl/api/v1/project/my'),
+    headers: {
+      'Authorization': 'Bearer $token',
+    },
+  );
+
+  if (response.statusCode == 200) {
+    final List<dynamic> data = jsonDecode(response.body);
+    return data.map((json) => ProjectResponse.fromJson(json)).toList();
+  } else {
+    throw Exception('Failed to load my projects: ${response.statusCode}');
+  }
+}
+
+Future<void> createProject(String name) async {
+  final token = await TokenStorage.getToken();
+  final response = await http.post(
+    Uri.parse('$baseUrl/api/v1/project'),
+    headers: {
+      'Authorization': 'Bearer $token',
+      'Content-Type': 'application/json',
+    },
+    body: jsonEncode({'name': name}),
+  );
+
+  if (response.statusCode != 200 && response.statusCode != 201) {
+    throw Exception('Failed to create project: ${response.statusCode}');
+  }
+}
+
+Future<void> deleteProject(int projectId) async {
+  final token = await TokenStorage.getToken();
+  final response = await http.delete(
+    Uri.parse('$baseUrl/api/v1/project/$projectId'),
+    headers: {
+      'Authorization': 'Bearer $token',
+    },
+  );
+
+  if (response.statusCode != 200 && response.statusCode != 204) {
+    throw Exception('Failed to delete project: ${response.statusCode}');
+  }
+}
 }

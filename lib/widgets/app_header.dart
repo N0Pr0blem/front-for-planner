@@ -5,6 +5,7 @@ import '../service/main_service.dart';
 import '../service/project_service.dart'; // ← новый импорт
 import '../utils/token_storage.dart';
 import '../theme/colors.dart';
+import '../screen/profile_page.dart';
 
 class AppHeader extends StatefulWidget {
   final void Function(ProjectResponse project) onProjectSelected;
@@ -180,47 +181,50 @@ class _AppHeaderState extends State<AppHeader> {
   }
 
   Widget _buildUserAvatar() {
-    if (_isLoading) {
-      return Container(
-        width: 40,
-        height: 40,
-        decoration: BoxDecoration(
-          color: AppColors.primary.withOpacity(0.1),
-          shape: BoxShape.circle,
-        ),
-        child: const Center(
-          child: SizedBox(
-            width: 16,
-            height: 16,
-            child: CircularProgressIndicator(
-              strokeWidth: 2,
-              valueColor: AlwaysStoppedAnimation(AppColors.primary),
+  return GestureDetector(
+    onTap: () {
+      Navigator.of(context).push(
+        MaterialPageRoute(builder: (context) => ProfilePage()),
+      );
+    },
+    child: _isLoading
+        ? Container(
+            width: 40,
+            height: 40,
+            decoration: BoxDecoration(
+              color: AppColors.primary.withOpacity(0.1),
+              shape: BoxShape.circle,
             ),
-          ),
-        ),
-      );
-    }
-
-    if (_user?.hasProfileImage == true) {
-      return Container(
-        width: 40,
-        height: 40,
-        decoration: const BoxDecoration(shape: BoxShape.circle),
-        child: ClipOval(child: _user!.avatarWidget),
-      );
-    }
-
-    return Container(
-      width: 40,
-      height: 40,
-      decoration: BoxDecoration(
-        color: AppColors.primary.withOpacity(0.1),
-        shape: BoxShape.circle,
-      ),
-      child: Icon(
-        Icons.person,
-        color: AppColors.primary,
-      ),
-    );
-  }
+            child: const Center(
+              child: SizedBox(
+                width: 16,
+                height: 16,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2,
+                  valueColor: AlwaysStoppedAnimation(AppColors.primary),
+                ),
+              ),
+            ),
+          )
+        : _user?.hasProfileImage == true
+            ? Container(
+                width: 40,
+                height: 40,
+                decoration: const BoxDecoration(shape: BoxShape.circle),
+                child: ClipOval(child: _user!.avatarWidget),
+              )
+            : Container(
+                width: 40,
+                height: 40,
+                decoration: BoxDecoration(
+                  color: AppColors.primary.withOpacity(0.1),
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(
+                  Icons.person,
+                  color: AppColors.primary,
+                ),
+              ),
+  );
+}
 }
