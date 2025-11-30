@@ -3,27 +3,27 @@ import 'package:your_app_name/dto/task/trekking_response.dart';
 import '../theme/colors.dart';
 import '../service/task_service.dart';
 import '../dto/task/task_detail_response.dart';
+import '../widgets/task_documents_section.dart';
 
 class TaskDetailPanel extends StatefulWidget {
   final TaskDetailResponse? task;
   final TrekkingResponse? trekking;
-  final Function(TaskDetailResponse)
-      onTaskUpdated; 
+  final Function(TaskDetailResponse) onTaskUpdated;
   final VoidCallback onClose;
   final VoidCallback? onTrekkingUpdated;
   final int projectId;
   final VoidCallback? onEdit;
 
-  const TaskDetailPanel(
-      {Key? key,
-      required this.task,
-      this.onEdit,
-      required this.onTaskUpdated,
-      required this.onClose,
-      this.onTrekkingUpdated,
-      this.trekking,
-      required this.projectId})
-      : super(key: key);
+  const TaskDetailPanel({
+    Key? key,
+    required this.task,
+    this.onEdit,
+    required this.onTaskUpdated,
+    required this.onClose,
+    this.onTrekkingUpdated,
+    this.trekking,
+    required this.projectId,
+  }) : super(key: key);
 
   @override
   State<TaskDetailPanel> createState() => _TaskDetailPanelState();
@@ -36,7 +36,6 @@ class _TaskDetailPanelState extends State<TaskDetailPanel>
   late Animation<double> _scaleAnimation;
   String _taskDescription = '';
   bool _isDescriptionLoading = false;
-
 
   @override
   void initState() {
@@ -52,9 +51,19 @@ class _TaskDetailPanelState extends State<TaskDetailPanel>
       CurvedAnimation(parent: _animationController, curve: Curves.elasticOut),
     );
     _animationController.forward();
+    
+    // Загружаем данные при инициализации
     if (widget.task != null) {
-      _loadTaskDescription();
+      _loadTaskData();
     }
+  }
+
+  // Новый метод для загрузки всех данных задачи
+  Future<void> _loadTaskData() async {
+    await Future.wait([
+      _loadTaskDescription(),
+      // Можно добавить другие загрузки данных здесь
+    ]);
   }
 
   @override
@@ -62,7 +71,8 @@ class _TaskDetailPanelState extends State<TaskDetailPanel>
     super.didUpdateWidget(oldWidget);
 
     if (widget.task != oldWidget.task && widget.task != null) {
-      _loadTaskDescription();
+      // Перезагружаем данные при изменении задачи
+      _loadTaskData();
     }
   }
 
@@ -99,18 +109,19 @@ class _TaskDetailPanelState extends State<TaskDetailPanel>
       context: context,
       builder: (BuildContext context) {
         return _AddTrekkingDialog(
-            task: task,
-            onTrekkingAdded: () {
-              if (widget.onTrekkingUpdated != null) {
-                widget.onTrekkingUpdated!();
-              }
-            },
-            projectId: widget.projectId);
+          task: task,
+          onTrekkingAdded: () {
+            if (widget.onTrekkingUpdated != null) {
+              widget.onTrekkingUpdated!();
+            }
+          },
+          projectId: widget.projectId,
+        );
       },
     );
   }
 
-  @override
+   @override
   Widget build(BuildContext context) {
     if (widget.task == null) {
       return Container(color: Colors.white);
@@ -131,8 +142,7 @@ class _TaskDetailPanelState extends State<TaskDetailPanel>
                   children: [
                     // ВЕРХНИЙ БЛОК С КРЕСТИКОМ
                     Padding(
-                      padding:
-                          const EdgeInsets.only(top: 24, left: 24, right: 24),
+                      padding: const EdgeInsets.only(top: 24, left: 24, right: 24),
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
@@ -195,22 +205,22 @@ class _TaskDetailPanelState extends State<TaskDetailPanel>
                                       await TaskService.updateTaskStatus(
                                           task.id, newStatus);
                                       final updatedTask = TaskDetailResponse(
-                                          id: task.id,
-                                          name: task.name,
-                                          isCompleted: task.isCompleted,
-                                          status: newStatus,
-                                          priority: task.priority,
-                                          complexity: task.complexity,
-                                          description: task.description,
-                                          documents: task.documents,
-                                          creationDate: task.creationDate,
-                                          assignedBy: task.assignedBy,
-                                          assignedTo: task.assignedTo,
-                                          projectId: task.projectId);
+                                        id: task.id,
+                                        name: task.name,
+                                        isCompleted: task.isCompleted,
+                                        status: newStatus,
+                                        priority: task.priority,
+                                        complexity: task.complexity,
+                                        description: task.description,
+                                        documents: task.documents,
+                                        creationDate: task.creationDate,
+                                        assignedBy: task.assignedBy,
+                                        assignedTo: task.assignedTo,
+                                        projectId: task.projectId,
+                                      );
                                       widget.onTaskUpdated(updatedTask);
                                     } catch (e) {
-                                      ScaffoldMessenger.of(context)
-                                          .showSnackBar(
+                                      ScaffoldMessenger.of(context).showSnackBar(
                                         SnackBar(
                                             content: Text(
                                                 'Ошибка обновления статуса: $e')),
@@ -241,39 +251,21 @@ class _TaskDetailPanelState extends State<TaskDetailPanel>
                           _DescriptionSection(
                             description: _taskDescription,
                             isLoading: _isDescriptionLoading,
-                            onRefresh:
-                                _loadTaskDescription, 
+                            onRefresh: _loadTaskDescription,
                           ),
                           const SizedBox(height: 24),
-                          _DocumentsSection(
-                            documents: task.documents,
-                            onDocumentsUpdated: (newDocuments) {
-                              final updatedTask = TaskDetailResponse(
-                                  id: task.id,
-                                  name: task.name,
-                                  isCompleted: task.isCompleted,
-                                  status: task.status,
-                                  priority: task.priority,
-                                  complexity: task.complexity,
-                                  description: task.description,
-                                  documents: newDocuments,
-                                  creationDate: task.creationDate,
-                                  assignedBy: task.assignedBy,
-                                  assignedTo: task.assignedTo,
-                                  projectId: task.projectId);
-                              widget.onTaskUpdated(updatedTask);
-                            },
-                          ),
+                          // Используем вынесенный компонент с файлами
+                          TaskDocumentsSection(taskId: task.id),
                           if (widget.trekking != null &&
                               widget.trekking!.trekkingList.isNotEmpty)
                             _TrekkingSection(
-                                trekking: widget.trekking!,
-                                onTrekkingUpdated: () {
-                                  if (widget.onTrekkingUpdated != null) {
-                                    widget
-                                        .onTrekkingUpdated!();
-                                  }
-                                }),
+                              trekking: widget.trekking!,
+                              onTrekkingUpdated: () {
+                                if (widget.onTrekkingUpdated != null) {
+                                  widget.onTrekkingUpdated!();
+                                }
+                              },
+                            ),
                         ],
                       ),
                     ),
@@ -313,6 +305,7 @@ class _TaskDetailPanelState extends State<TaskDetailPanel>
     }
   }
 }
+
 
 class _ActionButton extends StatelessWidget {
   final IconData icon;
@@ -532,221 +525,9 @@ class _InfoChip extends StatelessWidget {
   }
 }
 
-class _DocumentsSection extends StatefulWidget {
-  final List<String> documents;
-  final Function(List<String>) onDocumentsUpdated;
-
-  const _DocumentsSection({
-    Key? key,
-    required this.documents,
-    required this.onDocumentsUpdated,
-  }) : super(key: key);
-
-  @override
-  _DocumentsSectionState createState() => _DocumentsSectionState();
-}
-
-class _DocumentsSectionState extends State<_DocumentsSection> {
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Text(
-          'Прикрепить документ',
-          style: TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.bold,
-            color: AppColors.textPrimary,
-          ),
-        ),
-        const SizedBox(height: 12),
-        if (widget.documents.isEmpty)
-          _EmptyDocumentsState()
-        else
-          Column(
-            children: widget.documents
-                .map((doc) => _DocumentItem(
-                      name: doc,
-                      onDelete: () {
-                        final newDocuments = widget.documents;
-                        newDocuments.remove(doc);
-                        widget.onDocumentsUpdated(newDocuments);
-                      },
-                    ))
-                .toList(),
-          ),
-        const SizedBox(height: 12),
-        _AddDocumentButton(
-          onAdd: () {
-            final newDoc = 'document_${widget.documents.length + 1}.pdf';
-            final newDocuments = widget.documents;
-            newDocuments.add(newDoc);
-            widget.onDocumentsUpdated(newDocuments);
-          },
-        ),
-      ],
-    );
-  }
-}
-
-class _EmptyDocumentsState extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.symmetric(vertical: 40),
-      decoration: BoxDecoration(
-        color: AppColors.background,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: AppColors.cardBorder.withOpacity(0.5),
-          width: 2,
-        ),
-      ),
-      child: Column(
-        children: [
-          Icon(
-            Icons.folder_open,
-            size: 48,
-            color: AppColors.textHint.withOpacity(0.5),
-          ),
-          const SizedBox(height: 12),
-          Text(
-            'No documents attached',
-            style: TextStyle(
-              fontSize: 14,
-              color: AppColors.textHint,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _DocumentItem extends StatelessWidget {
-  final String name;
-  final VoidCallback onDelete;
-
-  const _DocumentItem({
-    Key? key,
-    required this.name,
-    required this.onDelete,
-  }) : super(key: key);
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 8),
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppColors.cardBorder.withOpacity(0.5)),
-        boxShadow: const [
-          BoxShadow(
-            color: AppColors.shadowLight,
-            offset: Offset(0, 2),
-            blurRadius: 4,
-            spreadRadius: -2,
-          ),
-        ],
-      ),
-      child: Row(
-        children: [
-          Icon(
-            Icons.insert_drive_file,
-            color: AppColors.primary,
-            size: 20,
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Text(
-              name,
-              style: const TextStyle(
-                fontSize: 14,
-                color: AppColors.textPrimary,
-              ),
-            ),
-          ),
-          IconButton(
-            icon: Icon(
-              Icons.delete_outline,
-              color: AppColors.textError,
-              size: 18,
-            ),
-            onPressed: onDelete,
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _AddDocumentButton extends StatelessWidget {
-  final VoidCallback onAdd;
-
-  const _AddDocumentButton({
-    Key? key,
-    required this.onAdd,
-  }) : super(key: key);
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: const [
-          BoxShadow(
-            color: AppColors.shadowLight,
-            offset: Offset(0, 4),
-            blurRadius: 8,
-            spreadRadius: -2,
-          ),
-        ],
-      ),
-      child: Material(
-        borderRadius: BorderRadius.circular(12),
-        child: InkWell(
-          borderRadius: BorderRadius.circular(12),
-          onTap: onAdd,
-          child: Container(
-            width: double.infinity,
-            padding: const EdgeInsets.symmetric(vertical: 12),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(
-                  Icons.add,
-                  color: AppColors.primary,
-                  size: 16,
-                ),
-                const SizedBox(width: 8),
-                Text(
-                  'Add Document',
-                  style: TextStyle(
-                    color: AppColors.primary,
-                    fontSize: 14,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
 class _TrekkingSection extends StatefulWidget {
   final TrekkingResponse trekking;
-  final Function onTrekkingUpdated; 
+  final Function onTrekkingUpdated;
 
   const _TrekkingSection({
     Key? key,
@@ -780,7 +561,6 @@ class _TrekkingSectionState extends State<_TrekkingSection> {
     }
   }
 
-  @override
   Widget build(BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -795,6 +575,7 @@ class _TrekkingSectionState extends State<_TrekkingSection> {
         ),
         const SizedBox(height: 8),
         ...widget.trekking.trekkingList.map((entry) {
+          final employeeName = _getEmployeeName(entry);
           return Container(
             margin: const EdgeInsets.only(bottom: 2),
             padding: const EdgeInsets.all(2),
@@ -811,7 +592,7 @@ class _TrekkingSectionState extends State<_TrekkingSection> {
                 const SizedBox(width: 12),
                 Expanded(
                   child: Text(
-                    '${entry.date}: ${entry.hours}h - ${entry.employeeFirstName} ${entry.employeeSecondName}',
+                    '${entry.date}: ${entry.hours}h - $employeeName',
                     style: const TextStyle(
                       fontSize: 14,
                       color: AppColors.textPrimary,
@@ -829,6 +610,17 @@ class _TrekkingSectionState extends State<_TrekkingSection> {
         }).toList(),
       ],
     );
+  }
+
+  String _getEmployeeName(TrekkingEntry entry) {
+    final parts = [
+      entry.employeeFirstName,
+      entry.employeeSecondName,
+    ]
+        .where((part) => part != null && part.isNotEmpty && part != 'null')
+        .toList();
+
+    return parts.isEmpty ? 'Неизвестный сотрудник' : parts.join(' ');
   }
 }
 

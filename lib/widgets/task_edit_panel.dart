@@ -4,6 +4,7 @@ import '../theme/colors.dart';
 import '../service/task_service.dart';
 import '../dto/task/task_detail_response.dart';
 import '../dto/task/task_update_request.dart';
+import '../widgets/task_documents_section.dart';
 
 class TaskEditPanel extends StatefulWidget {
   final TaskDetailResponse task;
@@ -12,7 +13,7 @@ class TaskEditPanel extends StatefulWidget {
   final VoidCallback onClose;
   final VoidCallback? onTrekkingUpdated;
   final int projectId;
-  final VoidCallback onSave; // Колбэк при успешном сохранении
+  final VoidCallback onSave;
 
   const TaskEditPanel({
     Key? key,
@@ -38,10 +39,11 @@ class _TaskEditPanelState extends State<TaskEditPanel>
   final _formKey = GlobalKey<FormState>();
   late TextEditingController _nameController;
   late TextEditingController _descriptionController;
-  String _selectedUrgency = 'Срочно';
-  String _selectedComplexity = 'Большая';
+  String _selectedUrgency = 'Средний приоритет';
+  String _selectedComplexity = 'Умеренная';
   String _selectedStatus = 'TO_DO';
   bool _isLoading = false;
+  bool _isDescriptionLoading = false; // Добавляем флаг загрузки описания
 
   // Маппинг значений для бэкенда
   final _urgencyMap = {
@@ -56,9 +58,36 @@ class _TaskEditPanelState extends State<TaskEditPanel>
     'Небольшая': 'EASY',
   };
 
+  // Обратный маппинг для получения русских названий из бэкенд-значений
+  final _reverseUrgencyMap = {
+    'URGENT': 'Срочно',
+    'MEDIUM': 'Средний приоритет',
+    'NOT_URGENT': 'Не срочно',
+  };
+
+  final _reverseComplexityMap = {
+    'HARD': 'Большая',
+    'MEDIUM': 'Умеренная',
+    'EASY': 'Небольшая',
+  };
+
   @override
   void initState() {
     super.initState();
+
+    // Сначала инициализируем все контроллеры с базовыми значениями
+    _nameController = TextEditingController(text: widget.task.name);
+    _descriptionController =
+        TextEditingController(text: widget.task.description);
+
+    // Установка текущих значений из задачи
+    _selectedUrgency = _reverseUrgencyMap[widget.task.priority.toUpperCase()] ??
+        'Средний приоритет';
+    _selectedComplexity =
+        _reverseComplexityMap[widget.task.complexity.toUpperCase()] ??
+            'Умеренная';
+    _selectedStatus = widget.task.status;
+
     _animationController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 300),
@@ -71,28 +100,33 @@ class _TaskEditPanelState extends State<TaskEditPanel>
     );
     _animationController.forward();
 
-    // Инициализация контроллеров значениями из задачи
-    _nameController = TextEditingController(text: widget.task.name);
-    _descriptionController = TextEditingController(text: widget.task.description);
-    
-    // Установка текущих значений
-    _selectedUrgency = _getUrgencyFromBackend(widget.task.priority);
-    _selectedComplexity = _getComplexityFromBackend(widget.task.complexity);
-    _selectedStatus = widget.task.status;
+    // Загружаем актуальное описание задачи асинхронно
+    _loadTaskDescription();
   }
 
-  String _getUrgencyFromBackend(String backendValue) {
-    return _urgencyMap.entries
-        .firstWhere((entry) => entry.value == backendValue.toUpperCase(),
-            orElse: () => _urgencyMap.entries.first)
-        .key;
-  }
+  Future<void> _loadTaskDescription() async {
+    // Если описание уже есть в задаче, не загружаем заново
+    if (widget.task.description.isNotEmpty) {
+      return;
+    }
 
-  String _getComplexityFromBackend(String backendValue) {
-    return _complexityMap.entries
-        .firstWhere((entry) => entry.value == backendValue.toUpperCase(),
-            orElse: () => _complexityMap.entries.first)
-        .key;
+    setState(() {
+      _isDescriptionLoading = true;
+    });
+
+    try {
+      final description = await TaskService.getTaskDescription(widget.task.id);
+      if (description.isNotEmpty) {
+        _descriptionController.text = description;
+      }
+    } catch (e) {
+      print('Ошибка загрузки описания: $e');
+      // Игнорируем ошибку, используем текущее описание
+    } finally {
+      setState(() {
+        _isDescriptionLoading = false;
+      });
+    }
   }
 
   @override
@@ -104,52 +138,51 @@ class _TaskEditPanelState extends State<TaskEditPanel>
   }
 
   Future<void> _saveChanges() async {
-  if (!_formKey.currentState!.validate()) return;
+    if (!_formKey.currentState!.validate()) return;
 
-  setState(() {
-    _isLoading = true;
-  });
-
-  try {
-    final updateRequest = TaskUpdateRequest(
-      name: _nameController.text,
-      urgency: _urgencyMap[_selectedUrgency]!,
-      complexity: _complexityMap[_selectedComplexity]!,
-      status: _selectedStatus,
-      description: _descriptionController.text,
-    );
-
-    await TaskService.updateTask(
-      taskId: widget.task.id,
-      updateRequest: updateRequest,
-    );
-
-    // ЗАГРУЖАЕМ ОБНОВЛЕННЫЕ ДАННЫЕ С СЕРВЕРА
-    final updatedTask = await TaskService.getTaskDetails(widget.task.id);
-    
-    widget.onTaskUpdated(updatedTask);
-    widget.onSave();
-
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('Задача успешно обновлена'),
-        backgroundColor: Colors.green,
-      ),
-    );
-
-  } catch (e) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('Ошибка обновления задачи: $e'),
-        backgroundColor: Colors.red,
-      ),
-    );
-  } finally {
     setState(() {
-      _isLoading = false;
+      _isLoading = true;
     });
+
+    try {
+      final updateRequest = TaskUpdateRequest(
+        name: _nameController.text,
+        urgency: _urgencyMap[_selectedUrgency]!,
+        complexity: _complexityMap[_selectedComplexity]!,
+        status: _selectedStatus,
+        description: _descriptionController.text,
+      );
+
+      await TaskService.updateTask(
+        taskId: widget.task.id,
+        updateRequest: updateRequest,
+      );
+
+      // Загружаем обновленные данные с сервера
+      final updatedTask = await TaskService.getTaskDetails(widget.task.id);
+
+      widget.onTaskUpdated(updatedTask);
+      widget.onSave();
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Задача "${_nameController.text}" успешно обновлена'),
+          backgroundColor: Colors.green,
+        ),
+      );
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Ошибка обновления задачи: $e'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    } finally {
+      setState(() {
+        _isLoading = false;
+      });
+    }
   }
-}
 
   void _showAddTrekkingDialog(BuildContext context) {
     showDialog(
@@ -186,7 +219,8 @@ class _TaskEditPanelState extends State<TaskEditPanel>
                     children: [
                       // ВЕРХНИЙ БЛОК С КРЕСТИКОМ И КНОПКАМИ
                       Padding(
-                        padding: const EdgeInsets.only(top: 24, left: 24, right: 24),
+                        padding:
+                            const EdgeInsets.only(top: 24, left: 24, right: 24),
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
@@ -299,32 +333,14 @@ class _TaskEditPanelState extends State<TaskEditPanel>
                             // Описание
                             _DescriptionEditSection(
                               controller: _descriptionController,
+                              isLoading: _isDescriptionLoading,
                             ),
                             const SizedBox(height: 24),
 
-                            // Документы (оставляем как было)
-                            _DocumentsSection(
-                              documents: widget.task.documents,
-                              onDocumentsUpdated: (newDocuments) {
-                                final updatedTask = TaskDetailResponse(
-                                  id: widget.task.id,
-                                  name: widget.task.name,
-                                  isCompleted: widget.task.isCompleted,
-                                  status: widget.task.status,
-                                  priority: widget.task.priority,
-                                  complexity: widget.task.complexity,
-                                  description: widget.task.description,
-                                  documents: newDocuments,
-                                  creationDate: widget.task.creationDate,
-                                  assignedBy: widget.task.assignedBy,
-                                  assignedTo: widget.task.assignedTo,
-                                  projectId: widget.task.projectId,
-                                );
-                                widget.onTaskUpdated(updatedTask);
-                              },
-                            ),
+                            // Документы
+                            TaskDocumentsSection(taskId: widget.task.id),
 
-                            // Трекинг (оставляем как было)
+                            // Трекинг
                             if (widget.trekking != null &&
                                 widget.trekking!.trekkingList.isNotEmpty)
                               _TrekkingSection(
@@ -349,8 +365,6 @@ class _TaskEditPanelState extends State<TaskEditPanel>
     );
   }
 }
-
-// НОВЫЕ ВИДЖЕТЫ ДЛЯ РЕДАКТИРОВАНИЯ
 
 class _SaveButton extends StatelessWidget {
   final VoidCallback onTap;
@@ -419,6 +433,72 @@ class _SaveButton extends StatelessWidget {
           ),
         ),
       ),
+    );
+  }
+}
+
+class _DescriptionEditSection extends StatelessWidget {
+  final TextEditingController controller;
+  final bool isLoading;
+
+  const _DescriptionEditSection({
+    Key? key,
+    required this.controller,
+    this.isLoading = false,
+  }) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          'Описание',
+          style: TextStyle(
+            fontSize: 18,
+            fontWeight: FontWeight.bold,
+            color: AppColors.textPrimary,
+          ),
+        ),
+        const SizedBox(height: 12),
+        Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: AppColors.background,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: AppColors.cardBorder.withOpacity(0.5),
+            ),
+          ),
+          child: isLoading
+              ? const Center(
+                  child: SizedBox(
+                    width: 20,
+                    height: 20,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  ),
+                )
+              : TextFormField(
+                  controller: controller,
+                  maxLines: 8,
+                  style: const TextStyle(
+                    fontSize: 14,
+                    color: AppColors.textPrimary,
+                    height: 1.5,
+                  ),
+                  decoration: const InputDecoration(
+                    border: InputBorder.none,
+                    hintText: 'Введите описание задачи...',
+                    hintStyle: TextStyle(
+                      fontSize: 14,
+                      color: AppColors.textHint,
+                      fontStyle: FontStyle.italic,
+                    ),
+                  ),
+                ),
+        ),
+      ],
     );
   }
 }
@@ -532,7 +612,6 @@ class _StatusItem {
   int get hashCode => value.hashCode;
 }
 
-
 class _UrgencyComboBox extends StatelessWidget {
   final String currentUrgency;
   final ValueChanged<String> onUrgencyChanged;
@@ -627,7 +706,9 @@ class _UrgencyItem {
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
-      other is _UrgencyItem && runtimeType == other.runtimeType && label == other.label;
+      other is _UrgencyItem &&
+          runtimeType == other.runtimeType &&
+          label == other.label;
 
   @override
   int get hashCode => label.hashCode;
@@ -727,279 +808,12 @@ class _ComplexityItem {
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
-      other is _ComplexityItem && runtimeType == other.runtimeType && label == other.label;
+      other is _ComplexityItem &&
+          runtimeType == other.runtimeType &&
+          label == other.label;
 
   @override
   int get hashCode => label.hashCode;
-}
-
-class _DescriptionEditSection extends StatelessWidget {
-  final TextEditingController controller;
-
-  const _DescriptionEditSection({
-    Key? key,
-    required this.controller,
-  }) : super(key: key);
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Text(
-          'Описание',
-          style: TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.bold,
-            color: AppColors.textPrimary,
-          ),
-        ),
-        const SizedBox(height: 12),
-        Container(
-          width: double.infinity,
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            color: AppColors.background,
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(
-              color: AppColors.cardBorder.withOpacity(0.5),
-            ),
-          ),
-          child: TextFormField(
-            controller: controller,
-            maxLines: 8,
-            style: const TextStyle(
-              fontSize: 14,
-              color: AppColors.textPrimary,
-              height: 1.5,
-            ),
-            decoration: const InputDecoration(
-              border: InputBorder.none,
-              hintText: 'Введите описание задачи...',
-              hintStyle: TextStyle(
-                fontSize: 14,
-                color: AppColors.textHint,
-                fontStyle: FontStyle.italic,
-              ),
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-
-class _DocumentsSection extends StatefulWidget {
-  final List<String> documents;
-  final Function(List<String>) onDocumentsUpdated;
-
-  const _DocumentsSection({
-    Key? key,
-    required this.documents,
-    required this.onDocumentsUpdated,
-  }) : super(key: key);
-
-  @override
-  _DocumentsSectionState createState() => _DocumentsSectionState();
-}
-
-class _DocumentsSectionState extends State<_DocumentsSection> {
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Text(
-          'Прикрепить документ',
-          style: TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.bold,
-            color: AppColors.textPrimary,
-          ),
-        ),
-        const SizedBox(height: 12),
-        if (widget.documents.isEmpty)
-          _EmptyDocumentsState()
-        else
-          Column(
-            children: widget.documents
-                .map((doc) => _DocumentItem(
-                      name: doc,
-                      onDelete: () {
-                        final newDocuments = widget.documents;
-                        newDocuments.remove(doc);
-                        widget.onDocumentsUpdated(newDocuments);
-                      },
-                    ))
-                .toList(),
-          ),
-        const SizedBox(height: 12),
-        _AddDocumentButton(
-          onAdd: () {
-            final newDoc = 'document_${widget.documents.length + 1}.pdf';
-            final newDocuments = widget.documents;
-            newDocuments.add(newDoc);
-            widget.onDocumentsUpdated(newDocuments);
-          },
-        ),
-      ],
-    );
-  }
-}
-
-class _EmptyDocumentsState extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.symmetric(vertical: 40),
-      decoration: BoxDecoration(
-        color: AppColors.background,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: AppColors.cardBorder.withOpacity(0.5),
-          width: 2,
-        ),
-      ),
-      child: Column(
-        children: [
-          Icon(
-            Icons.folder_open,
-            size: 48,
-            color: AppColors.textHint.withOpacity(0.5),
-          ),
-          const SizedBox(height: 12),
-          Text(
-            'No documents attached',
-            style: TextStyle(
-              fontSize: 14,
-              color: AppColors.textHint,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _DocumentItem extends StatelessWidget {
-  final String name;
-  final VoidCallback onDelete;
-
-  const _DocumentItem({
-    Key? key,
-    required this.name,
-    required this.onDelete,
-  }) : super(key: key);
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 8),
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppColors.cardBorder.withOpacity(0.5)),
-        boxShadow: const [
-          BoxShadow(
-            color: AppColors.shadowLight,
-            offset: Offset(0, 2),
-            blurRadius: 4,
-            spreadRadius: -2,
-          ),
-        ],
-      ),
-      child: Row(
-        children: [
-          Icon(
-            Icons.insert_drive_file,
-            color: AppColors.primary,
-            size: 20,
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Text(
-              name,
-              style: const TextStyle(
-                fontSize: 14,
-                color: AppColors.textPrimary,
-              ),
-            ),
-          ),
-          IconButton(
-            icon: Icon(
-              Icons.delete_outline,
-              color: AppColors.textError,
-              size: 18,
-            ),
-            onPressed: onDelete,
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _AddDocumentButton extends StatelessWidget {
-  final VoidCallback onAdd;
-
-  const _AddDocumentButton({
-    Key? key,
-    required this.onAdd,
-  }) : super(key: key);
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: const [
-          BoxShadow(
-            color: AppColors.shadowLight,
-            offset: Offset(0, 4),
-            blurRadius: 8,
-            spreadRadius: -2,
-          ),
-        ],
-      ),
-      child: Material(
-        borderRadius: BorderRadius.circular(12),
-        child: InkWell(
-          borderRadius: BorderRadius.circular(12),
-          onTap: onAdd,
-          child: Container(
-            width: double.infinity,
-            padding: const EdgeInsets.symmetric(vertical: 12),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(
-                  Icons.add,
-                  color: AppColors.primary,
-                  size: 16,
-                ),
-                const SizedBox(width: 8),
-                Text(
-                  'Add Document',
-                  style: TextStyle(
-                    color: AppColors.primary,
-                    fontSize: 14,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
 }
 
 class _TrekkingSection extends StatefulWidget {

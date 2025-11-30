@@ -6,6 +6,8 @@ import '../dto/task/trekking_response.dart';
 import '../dto/task/task_update_request.dart';
 import '../dto/task/task_create_request.dart';
 import '../utils/token_storage.dart';
+import '../dto/task/task_file_response.dart';
+import 'dart:html' as html; // Добавляем этот импорт для веб-версии
 
 class TaskService {
   static const String baseUrl = 'http://localhost:8080';
@@ -251,20 +253,141 @@ class TaskService {
       throw Exception('Failed to create task: ${response.statusCode}');
     }
   }
-  static Future<List<TaskResponse>> getMyTasks() async {
-  final token = await TokenStorage.getToken();
-  final response = await http.get(
-    Uri.parse('$baseUrl/api/v1/task/my'),
-    headers: {
-      'Authorization': 'Bearer $token',
-    },
-  );
 
-  if (response.statusCode == 200) {
-    final List<dynamic> data = jsonDecode(response.body);
-    return data.map((json) => TaskResponse.fromJson(json)).toList();
-  } else {
-    throw Exception('Failed to load my tasks: ${response.statusCode}');
+  static Future<List<TaskResponse>> getMyTasks() async {
+    final token = await TokenStorage.getToken();
+    final response = await http.get(
+      Uri.parse('$baseUrl/api/v1/task/my'),
+      headers: {
+        'Authorization': 'Bearer $token',
+      },
+    );
+
+    if (response.statusCode == 200) {
+      final List<dynamic> data = jsonDecode(response.body);
+      return data.map((json) => TaskResponse.fromJson(json)).toList();
+    } else {
+      throw Exception('Failed to load my tasks: ${response.statusCode}');
+    }
   }
-}
+
+  static Future<List<TaskFileResponse>> getTaskFiles(int taskId) async {
+    final token = await TokenStorage.getToken();
+    if (token == null) {
+      throw Exception('No auth token');
+    }
+
+    final url = Uri.parse('$baseUrl/api/v1/task/$taskId/file');
+
+    final response = await http.get(
+      url,
+      headers: {
+        'Authorization': 'Bearer $token',
+        'Content-Type': 'application/json',
+      },
+    );
+
+    if (response.statusCode == 200) {
+      final List<dynamic> jsonList = jsonDecode(response.body);
+      return jsonList
+          .map(
+              (item) => TaskFileResponse.fromJson(item as Map<String, dynamic>))
+          .toList();
+    } else {
+      throw Exception('Failed to load task files: ${response.statusCode}');
+    }
+  }
+
+  static Future<void> downloadTaskFile(
+      int taskId, int fileId, String fileName) async {
+    final token = await TokenStorage.getToken();
+    if (token == null) {
+      throw Exception('No auth token');
+    }
+
+    final url = Uri.parse('$baseUrl/api/v1/task/$taskId/file/$fileId');
+
+    final response = await http.get(
+      url,
+      headers: {
+        'Authorization': 'Bearer $token',
+      },
+    );
+
+    if (response.statusCode == 200) {
+      _saveTaskFile(response.bodyBytes, fileName);
+    } else {
+      throw Exception('Failed to download task file: ${response.statusCode}');
+    }
+  }
+
+  static Future<void> uploadTaskFile(
+      int taskId, List<int> bytes, String fileName) async {
+    final token = await TokenStorage.getToken();
+    if (token == null) {
+      throw Exception('No auth token');
+    }
+
+    final url = Uri.parse('$baseUrl/api/v1/task/$taskId/file');
+
+    var request = http.MultipartRequest('POST', url);
+    request.headers['Authorization'] = 'Bearer $token';
+
+    final multipartFile = http.MultipartFile.fromBytes(
+      'file',
+      bytes,
+      filename: fileName,
+    );
+
+    request.files.add(multipartFile);
+
+    final response = await request.send();
+
+    if (response.statusCode != 200 && response.statusCode != 201) {
+      throw Exception('Failed to upload task file: ${response.statusCode}');
+    }
+  }
+
+  static Future<void> deleteTaskFile(int taskId, int fileId) async {
+    final token = await TokenStorage.getToken();
+    if (token == null) {
+      throw Exception('No auth token');
+    }
+
+    final url = Uri.parse('$baseUrl/api/v1/task/$taskId/file/$fileId');
+
+    final response = await http.delete(
+      url,
+      headers: {
+        'Authorization': 'Bearer $token',
+        'Content-Type': 'application/json',
+      },
+    );
+
+    if (response.statusCode != 200) {
+      throw Exception('Failed to delete task file: ${response.statusCode}');
+    }
+  }
+
+  static void _saveTaskFile(List<int> bytes, String fileName) {
+    if (_isWeb()) {
+      _downloadForWeb(bytes, fileName);
+    } else {
+      print('Task file downloaded: $fileName (${bytes.length} bytes)');
+      // TODO: Реализовать сохранение файла для мобильной платформы
+    }
+  }
+
+  static bool _isWeb() {
+    return identical(0, 0.0);
+  }
+
+  static void _downloadForWeb(List<int> bytes, String fileName) {
+    final blob = html.Blob([bytes]);
+    final url = html.Url.createObjectUrlFromBlob(blob);
+    final anchor = html.AnchorElement(href: url)
+      ..setAttribute('download', fileName)
+      ..click();
+    html.Url.revokeObjectUrl(url);
+  }
 }
