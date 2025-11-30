@@ -2,17 +2,21 @@ import 'package:flutter/material.dart';
 import '../theme/colors.dart';
 
 class NavigationPanel extends StatelessWidget {
-  final bool isTasksActive;
-  final bool isMembersActive;
   final VoidCallback onTasksTap;
   final VoidCallback onMembersTap;
+  final VoidCallback onRepositoryTap;
+  final bool isTasksActive;
+  final bool isMembersActive;
+  final bool isRepositoryActive;
 
   const NavigationPanel({
     Key? key,
-    this.isTasksActive = false,
-    this.isMembersActive = false,
     required this.onTasksTap,
     required this.onMembersTap,
+    required this.onRepositoryTap,
+    required this.isTasksActive,
+    required this.isMembersActive,
+    required this.isRepositoryActive,
   }) : super(key: key);
 
   @override
@@ -43,7 +47,8 @@ class NavigationPanel extends StatelessWidget {
           _NavigationButton(
             icon: Icons.folder,
             label: 'Repository',
-            onTap: () {},
+            isActive: isRepositoryActive,
+            onTap: onRepositoryTap,
           ),
           
           const Spacer(),
@@ -52,6 +57,7 @@ class NavigationPanel extends StatelessWidget {
           _NavigationButton(
             icon: Icons.settings,
             label: 'Settings',
+            isActive: false,
             onTap: () {},
           ),
           

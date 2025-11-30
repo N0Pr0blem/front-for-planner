@@ -6,6 +6,8 @@ import 'screen/auth/register_screen.dart';
 import 'screen/auth/verification_screen.dart';
 import 'screen/not_found_screen.dart';
 import 'package:your_app_name/screen/profile_page.dart';
+import 'screen/repository_page.dart';
+import 'dto/project/project_response.dart';
 
 void main() {
   runApp(const MyApp());
@@ -29,11 +31,23 @@ class MyApp extends StatelessWidget {
           case '/login':
             return MaterialPageRoute(builder: (context) => const LoginScreen());
           case '/register':
-            return MaterialPageRoute(builder: (context) => const RegisterScreen());
+            return MaterialPageRoute(
+                builder: (context) => const RegisterScreen());
           case '/tasks':
-            return MaterialPageRoute(builder: (context) => const TasksPage());
+            final args = settings.arguments as ProjectResponse?;
+            return MaterialPageRoute(
+              builder: (context) => TasksPage(initialProject: args),
+            );
           case '/members':
-            return MaterialPageRoute(builder: (context) => const MembersPage());
+            final args = settings.arguments as ProjectResponse?;
+            return MaterialPageRoute(
+              builder: (context) => MembersPage(initialProject: args),
+            );
+          case '/repository':
+            final args = settings.arguments as ProjectResponse?;
+            return MaterialPageRoute(
+              builder: (context) => RepositoryPage(initialProject: args),
+            );
           case '/profile': // Добавьте этот case
             return MaterialPageRoute(builder: (context) => const ProfilePage());
           case '/verify':
@@ -44,7 +58,8 @@ class MyApp extends StatelessWidget {
               ),
             );
           default:
-            return MaterialPageRoute(builder: (context) => const NotFoundScreen());
+            return MaterialPageRoute(
+                builder: (context) => const NotFoundScreen());
         }
       },
       debugShowCheckedModeBanner: false,

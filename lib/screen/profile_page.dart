@@ -10,9 +10,7 @@ import '../theme/colors.dart';
 import '../screen/auth/login_screen.dart';
 import 'dart:convert';
 import 'package:file_picker/file_picker.dart';
-import 'dart:io';
 import 'dart:typed_data';
-import 'package:path_provider/path_provider.dart';
 
 class ProfilePage extends StatefulWidget {
   const ProfilePage({Key? key}) : super(key: key);

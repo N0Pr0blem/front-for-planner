@@ -15,7 +15,8 @@ import '../widgets/task_create_panel.dart';
 import '../widgets/task_edit_panel.dart';
 
 class TasksPage extends StatefulWidget {
-  const TasksPage({Key? key}) : super(key: key);
+  final ProjectResponse? initialProject;
+  const TasksPage({Key? key, this.initialProject}) : super(key: key);
 
   @override
   _TasksPageState createState() => _TasksPageState();
@@ -62,22 +63,11 @@ class _TasksPageState extends State<TasksPage> {
   @override
   void initState() {
     super.initState();
-    _loadProjects();
-    _loadCurrentUser();
-  }
-
-  Future<void> _loadCurrentUser() async {
-    try {
-      setState(() {
-        _currentUser = Assignee(
-          profileImage: null,
-          firstName: 'Текущий', // Замените на реальные данные
-          secondName: 'Пользователь',
-          lastName: null,
-        );
-      });
-    } catch (e) {
-      print('Ошибка загрузки пользователя: $e');
+    if (widget.initialProject != null) {
+      _selectedProject = widget.initialProject;
+      _loadTasks(widget.initialProject!.id);
+    } else {
+      _loadProjects();
     }
   }
 
@@ -234,7 +224,13 @@ class _TasksPageState extends State<TasksPage> {
       );
 
   void _navigateToMembers() {
-    Navigator.pushReplacementNamed(context, '/members');
+    Navigator.pushReplacementNamed(context, '/members',
+        arguments: _selectedProject);
+  }
+
+  void _navigateToRepository() {
+    Navigator.pushReplacementNamed(context, '/repository',
+        arguments: _selectedProject);
   }
 
   @override
@@ -244,20 +240,23 @@ class _TasksPageState extends State<TasksPage> {
       body: Column(
         children: [
           // Хедер
-          AppHeader(onProjectSelected: _onProjectSelected),
+          AppHeader(
+              onProjectSelected: _onProjectSelected,
+              initialProject: _selectedProject),
 
           // Основной контент
           Expanded(
             child: Row(
               children: [
-                // 1. Навигационная панель
                 SizedBox(
                   width: 100,
                   child: NavigationPanel(
                     isTasksActive: true,
                     isMembersActive: false,
-                    onTasksTap: () {}, // Ничего не делаем, т.к. мы уже на этой странице
+                    isRepositoryActive: false,
+                    onTasksTap: () {},
                     onMembersTap: _navigateToMembers,
+                    onRepositoryTap: _navigateToRepository,
                   ),
                 ),
 

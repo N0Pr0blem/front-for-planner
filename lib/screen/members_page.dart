@@ -10,7 +10,8 @@ import '../service/project_service.dart';
 import '../service/project_member_service.dart';
 
 class MembersPage extends StatefulWidget {
-  const MembersPage({Key? key}) : super(key: key);
+  final ProjectResponse? initialProject;
+  const MembersPage({Key? key, this.initialProject}) : super(key: key);
 
   @override
   _MembersPageState createState() => _MembersPageState();
@@ -25,7 +26,12 @@ class _MembersPageState extends State<MembersPage> {
   @override
   void initState() {
     super.initState();
-    _loadProjects();
+    if (widget.initialProject != null) {
+      _selectedProject = widget.initialProject;
+      _loadMembers(widget.initialProject!.id);
+    } else {
+      _loadProjects();
+    }
   }
 
   Future<void> _loadProjects() async {
@@ -63,21 +69,21 @@ class _MembersPageState extends State<MembersPage> {
   }
 
   Future<void> _loadMembers(int projectId) async {
-  try {
-    print('Loading members for project: $projectId');
-    final members = await ProjectMemberService().getProjectMembers(projectId);
-    print('Successfully loaded ${members.length} members');
-    
-    setState(() {
-      _members = members;
-    });
-  } catch (e) {
-    print('Error loading members: $e');
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('Ошибка загрузки участников: $e')),
-    );
+    try {
+      print('Loading members for project: $projectId');
+      final members = await ProjectMemberService().getProjectMembers(projectId);
+      print('Successfully loaded ${members.length} members');
+
+      setState(() {
+        _members = members;
+      });
+    } catch (e) {
+      print('Error loading members: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Ошибка загрузки участников: $e')),
+      );
+    }
   }
-}
 
   void _selectMember(ProjectMemberResponse member) {
     setState(() {
@@ -107,7 +113,13 @@ class _MembersPageState extends State<MembersPage> {
   }
 
   void _navigateToTasks() {
-    Navigator.pushReplacementNamed(context, '/tasks');
+    Navigator.pushReplacementNamed(context, '/tasks',
+        arguments: _selectedProject);
+  }
+
+  void _navigateToRepository() {
+    Navigator.pushReplacementNamed(context, '/repository',
+        arguments: _selectedProject);
   }
 
   @override
@@ -117,7 +129,10 @@ class _MembersPageState extends State<MembersPage> {
       body: Column(
         children: [
           // Хедер
-          AppHeader(onProjectSelected: _onProjectSelected),
+          AppHeader(
+            onProjectSelected: _onProjectSelected,
+            initialProject: _selectedProject,
+          ),
 
           // Основной контент
           Expanded(
@@ -129,8 +144,10 @@ class _MembersPageState extends State<MembersPage> {
                   child: NavigationPanel(
                     isTasksActive: false,
                     isMembersActive: true,
+                    isRepositoryActive: false,
                     onTasksTap: _navigateToTasks,
-                    onMembersTap: () {}, // Ничего не делаем, т.к. мы уже на этой странице
+                    onMembersTap: () {},
+                    onRepositoryTap: _navigateToRepository,
                   ),
                 ),
 
