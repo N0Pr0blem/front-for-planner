@@ -105,7 +105,7 @@ class _AppHeaderState extends State<AppHeader> {
               );
             },
             child: const Text(
-              'Popa',
+              'Fern.com',
               style: TextStyle(
                 fontSize: 24,
                 fontWeight: FontWeight.bold,

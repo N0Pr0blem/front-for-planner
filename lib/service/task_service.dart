@@ -390,4 +390,25 @@ class TaskService {
       ..click();
     html.Url.revokeObjectUrl(url);
   }
+
+  static Future<void> deleteTask(int taskId) async {
+    final token = await TokenStorage.getToken();
+    if (token == null) {
+      throw Exception('No auth token');
+    }
+
+    final url = Uri.parse('$baseUrl/api/v1/task/$taskId');
+
+    final response = await http.delete(
+      url,
+      headers: {
+        'Authorization': 'Bearer $token',
+        'Content-Type': 'application/json',
+      },
+    );
+
+    if (response.statusCode != 200) {
+      throw Exception('Failed to delete task: ${response.statusCode}');
+    }
+  }
 }
