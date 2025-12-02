@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:your_app_name/dto/auth/verify_request.dart';
+import 'package:your_app_name/dto/auth/verify_response.dart';
 import '../../service/auth_service.dart';
-import '../../dto/verify_request.dart';
-import '../../dto/verify_response.dart';
 import '../../theme/colors.dart';
 
 class VerificationScreen extends StatefulWidget {

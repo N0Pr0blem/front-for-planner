@@ -1,277 +1,228 @@
 import 'package:flutter/material.dart';
-import '../dto/project/project_member_response.dart';
+import 'dart:convert'; // Добавляем для base64 декодирования
 import '../theme/colors.dart';
+import '../dto/project/project_member_response.dart';
 import 'invite_member_dialog.dart';
-import 'dart:convert'; 
 
-class MembersListPanel extends StatefulWidget {
+class MembersListPanel extends StatelessWidget {
   final int projectId;
   final String? selectedMemberId;
   final Function(ProjectMemberResponse) onMemberSelected;
   final VoidCallback onAddMember;
   final List<ProjectMemberResponse> members;
-  final VoidCallback? onMembersUpdated;
+  final VoidCallback onMembersUpdated;
+  final bool isMobile;
 
   const MembersListPanel({
     Key? key,
     required this.projectId,
-    required this.selectedMemberId,
+    this.selectedMemberId,
     required this.onMemberSelected,
     required this.onAddMember,
     required this.members,
-    this.onMembersUpdated,
+    required this.onMembersUpdated,
+    this.isMobile = false,
   }) : super(key: key);
 
   @override
-  State<MembersListPanel> createState() => _MembersListPanelState();
-}
-
-class _MembersListPanelState extends State<MembersListPanel> {
-  final TextEditingController _searchController = TextEditingController();
-
-  @override
-  void initState() {
-    super.initState();
-    print('🎯 MembersListPanel initialized with ${widget.members.length} members');
-    for (var i = 0; i < widget.members.length; i++) {
-      final member = widget.members[i];
-      print('🎯 Member $i: ${member.user.fullName} - ${member.user.firstName} ${member.user.secondName}');
-    }
-  }
-
-  Future<void> _refreshMembers() async {
-    try {
-      if (widget.onMembersUpdated != null) {
-        widget.onMembersUpdated!();
-      }
-    } catch (e) {
-      print('Error in _refreshMembers: $e');
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Ошибка обновления участников: $e')),
-      );
-    }
-  }
-
-  void _showInviteDialog(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return InviteMemberDialog(
-          projectId: widget.projectId,
-          onMemberInvited: () {
-            _refreshMembers();
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text('Пользователь приглашен'),
-                backgroundColor: Colors.green,
-              ),
-            );
-          },
-        );
-      },
-    );
-  }
-
-  @override
   Widget build(BuildContext context) {
+    final bool isMemberSelected = selectedMemberId != null && selectedMemberId!.isNotEmpty;
+    
     return Container(
       color: AppColors.background,
-      padding: const EdgeInsets.all(16),
+      padding: isMobile
+          ? const EdgeInsets.all(16)
+          : const EdgeInsets.all(20),
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Шапка с кнопкой добавления и поиском
-          Row(
-            children: [
-              // Кнопка добавления
-              Container(
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(12),
-                  boxShadow: const [
-                    BoxShadow(
-                      color: AppColors.shadowLight,
-                      offset: Offset(0, 4),
-                      blurRadius: 8,
-                      spreadRadius: -2,
-                    ),
-                  ],
-                ),
-                child: Material(
-                  borderRadius: BorderRadius.circular(12),
-                  child: InkWell(
-                    borderRadius: BorderRadius.circular(12),
-                    onTap: () {
-                      _showInviteDialog(context);
-                    },
-                    child: Container(
-                      width: 36,
-                      height: 36,
-                      decoration: BoxDecoration(
-                        gradient: AppGradients.primaryButton,
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: const Icon(
-                        Icons.add,
-                        color: AppColors.textOnPrimary,
-                        size: 20,
-                      ),
+          if (!isMobile) ...[
+            Padding(
+              padding: const EdgeInsets.only(bottom: 20),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    'Участники проекта',
+                    style: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                      color: AppColors.textPrimary,
                     ),
                   ),
-                ),
+                  // Если участник выбран, показываем иконку вместо кнопки
+                  isMemberSelected
+                      ? IconButton(
+                          onPressed: () => _showInviteDialog(context),
+                          icon: Icon(
+                            Icons.person_add,
+                            color: AppColors.primary,
+                            size: 24,
+                          ),
+                          tooltip: 'Пригласить участника',
+                          style: IconButton.styleFrom(
+                            backgroundColor: AppColors.primary.withOpacity(0.1),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                          ),
+                        )
+                      : ElevatedButton.icon(
+                          onPressed: () => _showInviteDialog(context),
+                          icon: const Icon(Icons.person_add, size: 16),
+                          label: const Text('Пригласить'),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: AppColors.primary,
+                            foregroundColor: Colors.white,
+                          ),
+                        ),
+                ],
               ),
-              const SizedBox(width: 12),
-              // Поле поиска
-              Expanded(
-                child: Container(
-                  height: 36,
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(12),
-                    boxShadow: const [
-                      BoxShadow(
-                        color: AppColors.shadowLight,
-                        offset: Offset(0, 4),
-                        blurRadius: 8,
-                        spreadRadius: -2,
-                      ),
-                    ],
-                  ),
-                  child: TextField(
-                    controller: _searchController,
-                    decoration: InputDecoration(
-                      hintText: 'Search members...',
-                      hintStyle: const TextStyle(color: AppColors.textHint),
-                      border: InputBorder.none,
-                      contentPadding:
-                          const EdgeInsets.symmetric(horizontal: 12),
-                      prefixIcon: Icon(
-                        Icons.search,
-                        color: AppColors.textHint,
-                        size: 20,
-                      ),
-                    ),
-                    style: const TextStyle(fontSize: 14),
-                  ),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 16),
-          // Список участников
-          Expanded(
-            child: RefreshIndicator(
-              onRefresh: _refreshMembers,
-              child: _buildMembersList(),
             ),
+          ],
+          if (isMobile) ...[
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  'Участники (${members.length})',
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.textPrimary,
+                  ),
+                ),
+                IconButton(
+                  icon: Icon(Icons.person_add, color: AppColors.primary),
+                  onPressed: () => _showInviteDialog(context),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+          ],
+          Expanded(
+            child: members.isEmpty
+                ? Center(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          Icons.people_outline,
+                          size: 64,
+                          color: AppColors.textHint.withOpacity(0.5),
+                        ),
+                        const SizedBox(height: 16),
+                        Text(
+                          'Нет участников',
+                          style: TextStyle(
+                            color: AppColors.textHint,
+                            fontSize: 16,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        if (!isMobile && !isMemberSelected)
+                          TextButton(
+                            onPressed: () => _showInviteDialog(context),
+                            child: const Text('Пригласить первого участника'),
+                          ),
+                      ],
+                    ),
+                  )
+                : ListView.builder(
+                    itemCount: members.length,
+                    itemBuilder: (context, index) {
+                      final member = members[index];
+                      final isSelected = selectedMemberId == member.id.toString();
+                      if (isMobile) {
+                        return _buildMobileMemberCard(member, context);
+                      } else {
+                        return _buildDesktopMemberCard(member, context, isSelected);
+                      }
+                    },
+                  ),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildMembersList() {
-    if (widget.members.isEmpty) {
-      return const Center(
-        child: Text(
-          'Нет участников',
+  Widget _buildMobileMemberCard(
+    ProjectMemberResponse member,
+    BuildContext context,
+  ) {
+    final user = member.user;
+    
+    return Card(
+      margin: const EdgeInsets.only(bottom: 12),
+      child: ListTile(
+        leading: _buildUserAvatar(user, 40),
+        title: Text(
+          user.fullName,
+          style: const TextStyle(fontWeight: FontWeight.w500),
+        ),
+        subtitle: Text(
+          _getRoleName(member.projectRole),
           style: TextStyle(
+            fontSize: 12,
             color: AppColors.textHint,
-            fontSize: 16,
           ),
         ),
-      );
-    }
-
-    return ListView.builder(
-      itemCount: widget.members.length,
-      itemBuilder: (context, index) {
-        final member = widget.members[index];
-        
-        print('🎯 Building member $index: ${member.user.fullName}');
-        
-        // Безопасная проверка
-        try {
-          final isSelected = member.id.toString() == widget.selectedMemberId;
-          return _SafeMemberListItem(
-            member: member,
-            isSelected: isSelected,
-            onTap: () => widget.onMemberSelected(member),
-          );
-        } catch (e) {
-          print('❌ Error building member item at index $index: $e');
-          return _ErrorMemberListItem(
-            error: e.toString(),
-            index: index,
-          );
-        }
-      },
+        trailing: Icon(
+          Icons.chevron_right,
+          color: AppColors.textHint,
+        ),
+        onTap: () => onMemberSelected(member),
+      ),
     );
   }
-}
 
-class _SafeMemberListItem extends StatelessWidget {
-  final ProjectMemberResponse member;
-  final bool isSelected;
-  final VoidCallback onTap;
-
-  const _SafeMemberListItem({
-    Key? key,
-    required this.member,
-    required this.isSelected,
-    required this.onTap,
-  }) : super(key: key);
-
-  @override
-  Widget build(BuildContext context) {
-    print('🎯 Rendering member: ${member.user.fullName}');
+  Widget _buildDesktopMemberCard(
+    ProjectMemberResponse member,
+    BuildContext context,
+    bool isSelected,
+  ) {
+    final user = member.user;
     
     return Container(
       margin: const EdgeInsets.only(bottom: 8),
       decoration: BoxDecoration(
-        color: isSelected ? AppColors.primary.withOpacity(0.1) : Colors.white,
+        color: isSelected
+            ? AppColors.primary.withOpacity(0.1)
+            : Colors.white,
         borderRadius: BorderRadius.circular(12),
-        border: isSelected
-            ? Border.all(color: AppColors.primary, width: 2)
-            : Border.all(color: AppColors.cardBorder.withOpacity(0.5)),
-        boxShadow: isSelected
-            ? []
-            : const [
-                BoxShadow(
-                  color: AppColors.shadowLight,
-                  offset: Offset(0, 2),
-                  blurRadius: 4,
-                  spreadRadius: -2,
-                ),
-              ],
+        border: Border.all(
+          color: isSelected
+              ? AppColors.primary
+              : AppColors.cardBorder.withOpacity(0.5),
+          width: isSelected ? 2 : 1,
+        ),
       ),
       child: Material(
         color: Colors.transparent,
         child: InkWell(
           borderRadius: BorderRadius.circular(12),
-          onTap: onTap,
-          child: Container(
-            padding: const EdgeInsets.all(12),
+          onTap: () => onMemberSelected(member),
+          child: Padding(
+            padding: const EdgeInsets.all(16),
             child: Row(
               children: [
-                // Аватар
-                _buildAvatar(),
+                _buildUserAvatar(user, 40),
                 const SizedBox(width: 12),
-                // Информация
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        member.user.fullName,
+                        user.fullName,
                         style: TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.bold,
-                          color: isSelected ? AppColors.primary : AppColors.textPrimary,
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.textPrimary,
                         ),
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        _getRoleDisplayName(member.projectRole),
-                        style: const TextStyle(
+                        _getRoleName(member.projectRole),
+                        style: TextStyle(
                           fontSize: 12,
                           color: AppColors.textHint,
                         ),
@@ -279,6 +230,11 @@ class _SafeMemberListItem extends StatelessWidget {
                     ],
                   ),
                 ),
+                if (isSelected)
+                  Icon(
+                    Icons.check_circle,
+                    color: AppColors.primary,
+                  ),
               ],
             ),
           ),
@@ -287,45 +243,49 @@ class _SafeMemberListItem extends StatelessWidget {
     );
   }
 
-  Widget _buildAvatar() {
+ Widget _buildUserAvatar(UserInfoForTaskDto user, double size) {
+  if (user.hasAvatar && user.profileImage != null && user.profileImage!.isNotEmpty) {
     try {
-      if (member.user.hasAvatar) {
-        return ClipOval(
+      return SizedBox(
+        width: size,
+        height: size,
+        child: ClipOval(
           child: Image.memory(
-            base64Decode(member.user.profileImage!),
-            width: 40,
-            height: 40,
+            base64Decode(user.profileImage!),
+            width: size,
+            height: size,
             fit: BoxFit.cover,
             errorBuilder: (context, error, stackTrace) {
-              print('❌ Error loading avatar: $error');
-              return _defaultAvatar();
+              return _buildDefaultAvatar(size);
             },
           ),
-        );
-      }
+        ),
+      );
     } catch (e) {
-      print('❌ Error in _buildAvatar: $e');
+      return _buildDefaultAvatar(size);
     }
-    return _defaultAvatar();
   }
+  
+  return _buildDefaultAvatar(size);
+}
 
-  Widget _defaultAvatar() {
+  Widget _buildDefaultAvatar(double size) {
     return Container(
-      width: 40,
-      height: 40,
+      width: size,
+      height: size,
       decoration: BoxDecoration(
-        color: AppColors.primary.withOpacity(0.1),
         shape: BoxShape.circle,
+        color: AppColors.primary.withOpacity(0.1),
       ),
       child: Icon(
         Icons.person,
-        size: 20,
+        size: size * 0.6,
         color: AppColors.primary,
       ),
     );
   }
 
-  String _getRoleDisplayName(String role) {
+  String _getRoleName(String role) {
     switch (role) {
       case 'PROJECT_MANAGER':
         return 'Project Manager';
@@ -345,53 +305,39 @@ class _SafeMemberListItem extends StatelessWidget {
         return role;
     }
   }
-}
 
-class _ErrorMemberListItem extends StatelessWidget {
-  final String error;
-  final int index;
-
-  const _ErrorMemberListItem({
-    Key? key,
-    required this.error,
-    required this.index,
-  }) : super(key: key);
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 8),
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: Colors.red.withOpacity(0.1),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.red),
-      ),
-      child: Row(
-        children: [
-          Icon(Icons.error, color: Colors.red),
-          SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Error loading member $index',
-                  style: TextStyle(
-                    color: Colors.red,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                Text(
-                  error,
-                  style: TextStyle(color: Colors.red, fontSize: 12),
-                  maxLines: 2,
-                ),
-              ],
+  void _showInviteDialog(BuildContext context) {
+    if (isMobile) {
+      // Для мобильных используем bottom sheet
+      showModalBottomSheet(
+        context: context,
+        isScrollControlled: true,
+        shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+        ),
+        builder: (context) {
+          return Padding(
+            padding: EdgeInsets.only(
+              bottom: MediaQuery.of(context).viewInsets.bottom,
             ),
-          ),
-        ],
-      ),
-    );
+            child: InviteMemberDialog(
+              projectId: projectId,
+              onMemberInvited: onMembersUpdated,
+            ),
+          );
+        },
+      );
+    } else {
+      // Для десктоп используем dialog
+      showDialog(
+        context: context,
+        builder: (context) {
+          return InviteMemberDialog(
+            projectId: projectId,
+            onMemberInvited: onMembersUpdated,
+          );
+        },
+      );
+    }
   }
 }

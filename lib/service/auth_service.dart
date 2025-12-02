@@ -1,11 +1,11 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
-import '../dto/auth_request.dart';
-import '../dto/auth_response.dart';
-import '../dto/register_request.dart';
-import '../dto/register_response.dart';
-import '../dto/verify_request.dart';
-import '../dto/verify_response.dart';
+import 'package:your_app_name/dto/auth/auth_request.dart';
+import 'package:your_app_name/dto/auth/auth_response.dart';
+import 'package:your_app_name/dto/auth/register_request.dart';
+import 'package:your_app_name/dto/auth/register_response.dart';
+import 'package:your_app_name/dto/auth/verify_request.dart';
+import 'package:your_app_name/dto/auth/verify_response.dart';
 
 class AuthService {
   static const String baseUrl = 'http://localhost:8080';

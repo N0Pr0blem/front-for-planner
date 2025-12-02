@@ -1,9 +1,10 @@
+// member_detail_panel.dart (исправленная версия)
 import 'package:flutter/material.dart';
 import '../dto/project/project_member_response.dart';
 import '../theme/colors.dart';
 import '../service/project_member_service.dart';
 import 'dart:convert';
-import 'change_role_dialog.dart'; // Добавляем импорт
+import 'change_role_dialog.dart';
 
 class MemberDetailPanel extends StatefulWidget {
   final ProjectMemberResponse member;
@@ -11,6 +12,7 @@ class MemberDetailPanel extends StatefulWidget {
   final VoidCallback onMemberUpdated;
   final VoidCallback onMemberRemoved;
   final VoidCallback onClose;
+  final bool isMobile;
 
   const MemberDetailPanel({
     Key? key,
@@ -19,6 +21,7 @@ class MemberDetailPanel extends StatefulWidget {
     required this.onMemberUpdated,
     required this.onMemberRemoved,
     required this.onClose,
+    this.isMobile = false,
   }) : super(key: key);
 
   @override
@@ -58,19 +61,19 @@ class _MemberDetailPanelState extends State<MemberDetailPanel>
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: Text('Выгнать участника'),
+          title: const Text('Выгнать участника'),
           content: Text('Вы уверены, что хотите выгнать ${widget.member.user.fullName} из проекта?'),
           actions: [
             TextButton(
               onPressed: () => Navigator.of(context).pop(),
-              child: Text('Отмена'),
+              child: const Text('Отмена'),
             ),
             TextButton(
               onPressed: () {
                 Navigator.of(context).pop();
                 _removeMember();
               },
-              child: Text(
+              child: const Text(
                 'Выгнать',
                 style: TextStyle(color: Colors.red),
               ),
@@ -89,7 +92,7 @@ class _MemberDetailPanelState extends State<MemberDetailPanel>
       );
       widget.onMemberRemoved();
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
+        const SnackBar(
           content: Text('Участник удален из проекта'),
           backgroundColor: Colors.green,
         ),
@@ -105,31 +108,299 @@ class _MemberDetailPanelState extends State<MemberDetailPanel>
   }
 
   void _showChangeRoleDialog() {
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return ChangeRoleDialog( // Используем именованный класс
-          currentRole: widget.member.projectRole,
-          projectId: widget.projectId,
-          memberId: widget.member.id,
-          onRoleChanged: () {
-            widget.onMemberUpdated();
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text('Роль обновлена'),
-                backgroundColor: Colors.green,
-              ),
-            );
-          },
-        );
-      },
-    );
+    if (widget.isMobile) {
+      // Мобильная версия - Bottom Sheet
+      showModalBottomSheet(
+        context: context,
+        isScrollControlled: true,
+        shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+        ),
+        builder: (context) {
+          return Padding(
+            padding: EdgeInsets.only(
+              bottom: MediaQuery.of(context).viewInsets.bottom,
+            ),
+            child: ChangeRoleDialog(
+              currentRole: widget.member.projectRole,
+              projectId: widget.projectId,
+              memberId: widget.member.id,
+              onRoleChanged: () {
+                widget.onMemberUpdated();
+                Navigator.pop(context);
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Роль обновлена'),
+                    backgroundColor: Colors.green,
+                  ),
+                );
+              },
+            ),
+          );
+        },
+      );
+    } else {
+      // Десктоп версия - Dialog
+      showDialog(
+        context: context,
+        builder: (BuildContext context) {
+          return ChangeRoleDialog(
+            currentRole: widget.member.projectRole,
+            projectId: widget.projectId,
+            memberId: widget.member.id,
+            onRoleChanged: () {
+              widget.onMemberUpdated();
+              Navigator.pop(context);
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('Роль обновлена'),
+                  backgroundColor: Colors.green,
+                ),
+              );
+            },
+          );
+        },
+      );
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    final member = widget.member;
+    if (widget.isMobile) {
+      return _buildMobileLayout();
+    } else {
+      return _buildDesktopLayout();
+    }
+  }
 
+  Widget _buildMobileLayout() {
+    return Scaffold(
+      appBar: AppBar(
+        title: Text(widget.member.user.fullName),
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: widget.onClose,
+        ),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.more_vert),
+            onPressed: () {
+              _showMobileActionMenu(context);
+            },
+          ),
+        ],
+      ),
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Аватар и имя
+            _buildMobileAvatarSection(),
+            
+            const SizedBox(height: 32),
+            
+            // Роль
+            _buildMobileRoleSection(),
+            
+            const SizedBox(height: 32),
+            
+            // Информация о пользователе
+            _buildUserInfoSection(),
+            
+            const SizedBox(height: 32),
+            
+            // Кнопка выгона
+            _buildMobileRemoveButton(),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildMobileAvatarSection() {
+    final user = widget.member.user;
+    
+    return Center(
+      child: Column(
+        children: [
+          // Аватар
+          if (user.hasAvatar && user.profileImage != null)
+            ClipOval(
+              child: Image.memory(
+                base64Decode(user.profileImage!),
+                width: 120,
+                height: 120,
+                fit: BoxFit.cover,
+                errorBuilder: (context, error, stackTrace) {
+                  return _defaultAvatar(120);
+                },
+              ),
+            )
+          else
+            _defaultAvatar(120),
+          
+          const SizedBox(height: 16),
+          
+          // Имя
+          Text(
+            user.fullName,
+            style: const TextStyle(
+              fontSize: 24,
+              fontWeight: FontWeight.bold,
+              color: AppColors.textPrimary,
+            ),
+          ),
+          
+          const SizedBox(height: 8),
+          
+          // ID участника
+          Text(
+            'ID: ${widget.member.id}',
+            style: TextStyle(
+              fontSize: 14,
+              color: AppColors.textHint,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildMobileRoleSection() {
+    return Container(
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(12),
+        color: AppColors.primary.withOpacity(0.05),
+        border: Border.all(color: AppColors.primary.withOpacity(0.2)),
+      ),
+      padding: const EdgeInsets.all(16),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Роль в проекте',
+                style: TextStyle(
+                  fontSize: 12,
+                  color: AppColors.textHint,
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                _getRoleDisplayName(widget.member.projectRole),
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.textPrimary,
+                ),
+              ),
+            ],
+          ),
+          IconButton(
+            icon: Icon(
+              Icons.edit,
+              color: AppColors.primary,
+            ),
+            onPressed: _showChangeRoleDialog,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildUserInfoSection() {
+    final user = widget.member.user;
+    
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Имя
+        if (user.firstName != null && user.firstName!.isNotEmpty)
+          _buildInfoItem('Имя', user.firstName!),
+        
+        // Фамилия
+        if (user.lastName != null && user.lastName!.isNotEmpty)
+          _buildInfoItem('Фамилия', user.lastName!),
+        
+        // Отчество
+        if (user.secondName != null && user.secondName!.isNotEmpty)
+          _buildInfoItem('Отчество', user.secondName!),
+      ],
+    );
+  }
+
+  Widget _buildInfoItem(String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: Row(
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  label,
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: AppColors.textHint,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  value,
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w500,
+                    color: AppColors.textPrimary,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildMobileRemoveButton() {
+    return SizedBox(
+      width: double.infinity,
+      child: OutlinedButton(
+        onPressed: _showRemoveConfirmationDialog,
+        style: OutlinedButton.styleFrom(
+          padding: const EdgeInsets.symmetric(vertical: 16),
+          side: const BorderSide(color: Colors.red),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(
+              Icons.person_remove,
+              color: Colors.red,
+              size: 20,
+            ),
+            const SizedBox(width: 8),
+            Text(
+              'Выгнать из проекта',
+              style: TextStyle(
+                color: Colors.red,
+                fontSize: 16,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildDesktopLayout() {
     return Container(
       color: Colors.white,
       child: LayoutBuilder(
@@ -150,7 +421,7 @@ class _MemberDetailPanelState extends State<MemberDetailPanel>
                         children: [
                           Expanded(
                             child: Text(
-                              member.user.fullName,
+                              widget.member.user.fullName,
                               style: const TextStyle(
                                 fontSize: 28,
                                 fontWeight: FontWeight.bold,
@@ -186,22 +457,22 @@ class _MemberDetailPanelState extends State<MemberDetailPanel>
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           // Аватар и основная информация
-                          _MemberAvatarSection(member: member),
+                          _buildDesktopAvatarSection(),
                           
                           const SizedBox(height: 24),
 
                           // Роль
-                          _RoleSection(
-                            role: member.projectRole,
-                            onChangeRole: _showChangeRoleDialog,
-                          ),
+                          _buildDesktopRoleSection(),
+
+                          const SizedBox(height: 32),
+
+                          // Информация о пользователе
+                          _buildDesktopUserInfo(),
 
                           const SizedBox(height: 32),
 
                           // Кнопка выгона
-                          _RemoveMemberButton(
-                            onRemove: _showRemoveConfirmationDialog,
-                          ),
+                          _buildDesktopRemoveButton(),
                         ],
                       ),
                     ),
@@ -214,26 +485,18 @@ class _MemberDetailPanelState extends State<MemberDetailPanel>
       ),
     );
   }
-}
 
-class _MemberAvatarSection extends StatelessWidget {
-  final ProjectMemberResponse member;
-
-  const _MemberAvatarSection({
-    Key? key,
-    required this.member,
-  }) : super(key: key);
-
-  @override
-  Widget build(BuildContext context) {
+  Widget _buildDesktopAvatarSection() {
+    final user = widget.member.user;
+    
     return Center(
       child: Column(
         children: [
           // Аватар
-          if (member.user.hasAvatar)
+          if (user.hasAvatar && user.profileImage != null)
             ClipOval(
               child: Image.memory(
-                base64Decode(member.user.profileImage!),
+                base64Decode(user.profileImage!),
                 width: 120,
                 height: 120,
                 fit: BoxFit.cover,
@@ -249,11 +512,22 @@ class _MemberAvatarSection extends StatelessWidget {
           
           // Имя
           Text(
-            member.user.fullName,
+            user.fullName,
             style: const TextStyle(
               fontSize: 24,
               fontWeight: FontWeight.bold,
               color: AppColors.textPrimary,
+            ),
+          ),
+          
+          const SizedBox(height: 8),
+          
+          // ID участника
+          Text(
+            'ID: ${widget.member.id}',
+            style: TextStyle(
+              fontSize: 14,
+              color: AppColors.textHint,
             ),
           ),
         ],
@@ -261,35 +535,7 @@ class _MemberAvatarSection extends StatelessWidget {
     );
   }
 
-  Widget _defaultAvatar(double size) {
-    return Container(
-      width: size,
-      height: size,
-      decoration: BoxDecoration(
-        color: AppColors.primary.withOpacity(0.1),
-        shape: BoxShape.circle,
-      ),
-      child: Icon(
-        Icons.person,
-        size: size * 0.5,
-        color: AppColors.primary,
-      ),
-    );
-  }
-}
-
-class _RoleSection extends StatelessWidget {
-  final String role;
-  final VoidCallback onChangeRole;
-
-  const _RoleSection({
-    Key? key,
-    required this.role,
-    required this.onChangeRole,
-  }) : super(key: key);
-
-  @override
-  Widget build(BuildContext context) {
+  Widget _buildDesktopRoleSection() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -326,8 +572,8 @@ class _RoleSection extends StatelessWidget {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Text(
-                    _getRoleDisplayName(role),
-                    style: TextStyle(
+                    _getRoleDisplayName(widget.member.projectRole),
+                    style: const TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w500,
                       color: AppColors.textPrimary,
@@ -349,7 +595,7 @@ class _RoleSection extends StatelessWidget {
                       borderRadius: BorderRadius.circular(12),
                       child: InkWell(
                         borderRadius: BorderRadius.circular(12),
-                        onTap: onChangeRole,
+                        onTap: _showChangeRoleDialog,
                         child: Container(
                           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                           decoration: BoxDecoration(
@@ -365,9 +611,9 @@ class _RoleSection extends StatelessWidget {
                                 color: AppColors.primary,
                               ),
                               const SizedBox(width: 6),
-                              Text(
+                              const Text(
                                 'Сменить роль',
-                                style: const TextStyle(
+                                style: TextStyle(
                                   fontSize: 12,
                                   fontWeight: FontWeight.w500,
                                   color: AppColors.textPrimary,
@@ -388,38 +634,64 @@ class _RoleSection extends StatelessWidget {
     );
   }
 
-  String _getRoleDisplayName(String role) {
-    switch (role) {
-      case 'PROJECT_MANAGER':
-        return 'Project Manager';
-      case 'FRONTEND_DEVELOPER':
-        return 'Frontend Developer';
-      case 'BACKEND_DEVELOPER':
-        return 'Backend Developer';
-      case 'TESTER':
-        return 'Tester';
-      case 'UI_UX_DESIGNER':
-        return 'UI/UX Designer';
-      case 'DEVOPS':
-        return 'DevOps';
-      case 'ANOTHER':
-        return 'Another';
-      default:
-        return role;
-    }
+  Widget _buildDesktopUserInfo() {
+    final user = widget.member.user;
+    
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Информация',
+          style: TextStyle(
+            fontSize: 18,
+            fontWeight: FontWeight.bold,
+            color: AppColors.textPrimary,
+          ),
+        ),
+        const SizedBox(height: 12),
+        
+        if (user.firstName != null && user.firstName!.isNotEmpty)
+          _buildDesktopInfoItem('Имя', user.firstName!),
+        
+        if (user.lastName != null && user.lastName!.isNotEmpty)
+          _buildDesktopInfoItem('Фамилия', user.lastName!),
+        
+        if (user.secondName != null && user.secondName!.isNotEmpty)
+          _buildDesktopInfoItem('Отчество', user.secondName!),
+      ],
+    );
   }
-}
 
-class _RemoveMemberButton extends StatelessWidget {
-  final VoidCallback onRemove;
+  Widget _buildDesktopInfoItem(String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: Row(
+        children: [
+          SizedBox(
+            width: 100,
+            child: Text(
+              label,
+              style: TextStyle(
+                color: AppColors.textHint,
+                fontSize: 14,
+              ),
+            ),
+          ),
+          const SizedBox(width: 16),
+          Text(
+            value,
+            style: const TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w500,
+              color: AppColors.textPrimary,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 
-  const _RemoveMemberButton({
-    Key? key,
-    required this.onRemove,
-  }) : super(key: key);
-
-  @override
-  Widget build(BuildContext context) {
+  Widget _buildDesktopRemoveButton() {
     return Container(
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(12),
@@ -436,7 +708,7 @@ class _RemoveMemberButton extends StatelessWidget {
         borderRadius: BorderRadius.circular(12),
         child: InkWell(
           borderRadius: BorderRadius.circular(12),
-          onTap: onRemove,
+          onTap: _showRemoveConfirmationDialog,
           child: Container(
             width: double.infinity,
             padding: const EdgeInsets.all(16),
@@ -471,5 +743,80 @@ class _RemoveMemberButton extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  void _showMobileActionMenu(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      builder: (context) {
+        return Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              leading: const Icon(Icons.edit, color: AppColors.primary),
+              title: const Text('Сменить роль'),
+              onTap: () {
+                Navigator.pop(context);
+                _showChangeRoleDialog();
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.person_remove, color: Colors.red),
+              title: const Text('Выгнать из проекта'),
+              onTap: () {
+                Navigator.pop(context);
+                _showRemoveConfirmationDialog();
+              },
+            ),
+            const Divider(),
+            ListTile(
+              leading: const Icon(Icons.close),
+              title: const Text('Отмена'),
+              onTap: () => Navigator.pop(context),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Widget _defaultAvatar(double size) {
+    return Container(
+      width: size,
+      height: size,
+      decoration: BoxDecoration(
+        color: AppColors.primary.withOpacity(0.1),
+        shape: BoxShape.circle,
+      ),
+      child: Icon(
+        Icons.person,
+        size: size * 0.5,
+        color: AppColors.primary,
+      ),
+    );
+  }
+
+  String _getRoleDisplayName(String role) {
+    switch (role) {
+      case 'PROJECT_MANAGER':
+        return 'Project Manager';
+      case 'FRONTEND_DEVELOPER':
+        return 'Frontend Developer';
+      case 'BACKEND_DEVELOPER':
+        return 'Backend Developer';
+      case 'TESTER':
+        return 'Tester';
+      case 'UI_UX_DESIGNER':
+        return 'UI/UX Designer';
+      case 'DEVOPS':
+        return 'DevOps';
+      case 'ANOTHER':
+        return 'Another';
+      default:
+        return role;
+    }
   }
 }
