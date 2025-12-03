@@ -150,22 +150,18 @@ class _ProfilePageState extends State<ProfilePage> {
       backgroundColor: Colors.white,
       body: Row(
         children: [
-          // Левая панель с кнопками (1/4 ширины)
           SizedBox(
             width: MediaQuery.of(context).size.width * 0.25,
-            child: _NavigationPanel(
-              onBack: _goBackToTasks,
-              onLogout: _logout,
-            ),
+            child: _NavigationPanel(onBack: _goBackToTasks, onLogout: _logout),
           ),
-
-          // Правая панель с контентом (3/4 ширины) - растягиваем на всю высоту
           Expanded(
             child: Container(
               color: Colors.white,
               child: _isLoading
                   ? const Center(child: CircularProgressIndicator())
-                  : _buildContent(),
+                  : _user != null
+                      ? _buildContent()
+                      : const Center(child: Text('Профиль не загружен')),
             ),
           ),
         ],
@@ -174,33 +170,41 @@ class _ProfilePageState extends State<ProfilePage> {
   }
 
   Widget _buildContent() {
+    // Добавляем явную проверку
+    if (_user == null) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: const [
+            Icon(Icons.error_outline, color: Colors.grey),
+            SizedBox(height: 16),
+            Text('Не удалось загрузить профиль',
+                style: TextStyle(color: Colors.grey)),
+          ],
+        ),
+      );
+    }
+
     return SingleChildScrollView(
       child: Padding(
         padding: const EdgeInsets.all(24),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Секция профиля
             _ProfileSection(
-              user: _user!,
+              user: _user!, // Теперь безопасно
               isEditing: _isEditingProfile,
               onEditToggle: _toggleEditProfile,
               onCancelEdit: _cancelEdit,
               onProfileUpdated: _loadData,
             ),
-
             const SizedBox(height: 32),
-
-            // Секция моих проектов
             _MyProjectsSection(
               projects: _myProjects,
               onCreateProject: _showCreateProjectDialog,
               onDeleteProject: _deleteProject,
             ),
-
             const SizedBox(height: 32),
-
-            // Секция моих задач
             _MyTasksSection(tasks: _myTasks),
           ],
         ),
@@ -228,32 +232,32 @@ class _NavigationPanel extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const SizedBox(height: 40),
-          
+
           // Кнопка назад к задачам
           _NavButton(
             icon: Icons.arrow_back,
             label: 'Назад к задачам',
             onTap: onBack,
           ),
-          
+
           const SizedBox(height: 32),
-          
+
           _NavButton(
             icon: Icons.person,
             label: 'Профиль',
             isActive: true,
             onTap: () {},
           ),
-          
+
           const Spacer(),
-          
+
           _NavButton(
             icon: Icons.logout,
             label: 'Выйти',
             onTap: onLogout,
             isLogout: true,
           ),
-          
+
           const SizedBox(height: 20),
         ],
       ),
@@ -282,7 +286,8 @@ class _NavButton extends StatelessWidget {
     return Container(
       height: 60,
       decoration: BoxDecoration(
-        color: isActive ? AppColors.primary.withOpacity(0.5) : Colors.transparent,
+        color:
+            isActive ? AppColors.primary.withOpacity(0.5) : Colors.transparent,
         borderRadius: BorderRadius.circular(12),
       ),
       child: Material(
@@ -296,9 +301,11 @@ class _NavButton extends StatelessWidget {
               children: [
                 Icon(
                   icon,
-                  color: isLogout 
-                    ? Colors.red 
-                    : (isActive ? AppColors.textOnPrimary : AppColors.textHint),
+                  color: isLogout
+                      ? Colors.red
+                      : (isActive
+                          ? AppColors.textOnPrimary
+                          : AppColors.textHint),
                   size: 24,
                 ),
                 const SizedBox(width: 12),
@@ -306,9 +313,11 @@ class _NavButton extends StatelessWidget {
                   label,
                   style: TextStyle(
                     fontSize: 16,
-                    color: isLogout 
-                      ? Colors.red 
-                      : (isActive ? AppColors.textOnPrimary : AppColors.textHint),
+                    color: isLogout
+                        ? Colors.red
+                        : (isActive
+                            ? AppColors.textOnPrimary
+                            : AppColors.textHint),
                     fontWeight: isActive ? FontWeight.bold : FontWeight.normal,
                   ),
                 ),
@@ -351,9 +360,12 @@ class __ProfileSectionState extends State<_ProfileSection> {
   @override
   void initState() {
     super.initState();
-    _firstNameController = TextEditingController(text: widget.user.firstName ?? '');
-    _secondNameController = TextEditingController(text: widget.user.secondName ?? '');
-    _lastNameController = TextEditingController(text: widget.user.lastName ?? '');
+    _firstNameController =
+        TextEditingController(text: widget.user.firstName ?? '');
+    _secondNameController =
+        TextEditingController(text: widget.user.secondName ?? '');
+    _lastNameController =
+        TextEditingController(text: widget.user.lastName ?? '');
   }
 
   @override
@@ -378,7 +390,7 @@ class __ProfileSectionState extends State<_ProfileSection> {
           _imageBytes = _pickedFile!.bytes; // Сохраняем байты
         });
         print('Файл выбран: ${_pickedFile!.name}');
-        
+
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Изображение "${_pickedFile!.name}" выбрано успешно'),
@@ -400,41 +412,42 @@ class __ProfileSectionState extends State<_ProfileSection> {
   }
 
   Future<void> _saveProfile() async {
-  try {
-    if (_pickedFile != null && _imageBytes != null) {
-      // Отправляем файл как multipart/form-data
-      await MainService().updateProfileWithImage(
-        secondName: _secondNameController.text,
-        lastName: _lastNameController.text,
-        fileBytes: _imageBytes!,
-        fileName: _pickedFile!.name,
-        mimeType: _pickedFile!.extension ?? 'image/jpeg',
+    try {
+      if (_pickedFile != null && _imageBytes != null) {
+        // Отправляем файл как multipart/form-data
+        await MainService().updateProfileWithImage(
+          secondName: _secondNameController.text,
+          lastName: _lastNameController.text,
+          fileBytes: _imageBytes!,
+          fileName: _pickedFile!.name,
+          mimeType: _pickedFile!.extension ?? 'image/jpeg',
+        );
+      } else {
+        // Отправляем только текстовые данные
+        await MainService().updateProfile(
+          secondName: _secondNameController.text,
+          lastName: _lastNameController.text,
+        );
+      }
+
+      widget.onProfileUpdated();
+      widget.onEditToggle();
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Профиль обновлен'),
+          backgroundColor: Colors.green,
+        ),
       );
-    } else {
-      // Отправляем только текстовые данные
-      await MainService().updateProfile(
-        secondName: _secondNameController.text,
-        lastName: _lastNameController.text,
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Ошибка обновления профиля: $e'),
+          backgroundColor: Colors.red,
+        ),
       );
     }
-    
-    widget.onProfileUpdated();
-    widget.onEditToggle();
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('Профиль обновлен'),
-        backgroundColor: Colors.green,
-      ),
-    );
-  } catch (e) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('Ошибка обновления профиля: $e'),
-        backgroundColor: Colors.red,
-      ),
-    );
   }
-}
+
   Widget _buildAvatar() {
     if (_imageBytes != null) {
       return ClipOval(
@@ -449,7 +462,7 @@ class __ProfileSectionState extends State<_ProfileSection> {
         ),
       );
     }
-    
+
     return widget.user.hasProfileImage
         ? ClipOval(
             child: Image.memory(
@@ -523,7 +536,6 @@ class __ProfileSectionState extends State<_ProfileSection> {
             ],
           ),
           const SizedBox(height: 24),
-          
           if (!widget.isEditing) _buildProfileView() else _buildProfileEdit(),
         ],
       ),
@@ -625,7 +637,7 @@ class __ProfileSectionState extends State<_ProfileSection> {
           textAlign: TextAlign.center,
         ),
         const SizedBox(height: 24),
-        
+
         _EditTextField(
           controller: _firstNameController,
           label: 'Имя',
@@ -960,7 +972,9 @@ class __CreateProjectDialogState extends State<_CreateProjectDialog> {
                                         height: 20,
                                         child: CircularProgressIndicator(
                                           strokeWidth: 2,
-                                          valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                                          valueColor:
+                                              AlwaysStoppedAnimation<Color>(
+                                                  Colors.white),
                                         ),
                                       )
                                     : Text(

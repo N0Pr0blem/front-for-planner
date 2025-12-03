@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:your_app_name/widgets/mobile_bottom_nav_bar.dart';
 import '../dto/project/project_response.dart';
 import '../dto/repository/repository_file_response.dart';
 import '../service/repository_service.dart';
@@ -12,7 +13,7 @@ import '../widgets/repository_file_item.dart';
 
 class RepositoryPage extends StatefulWidget {
   final ProjectResponse? initialProject;
-  const RepositoryPage({Key? key,this.initialProject}) : super(key: key);
+  const RepositoryPage({Key? key, this.initialProject}) : super(key: key);
 
   @override
   _RepositoryPageState createState() => _RepositoryPageState();
@@ -153,15 +154,189 @@ class _RepositoryPageState extends State<RepositoryPage> {
 
   void _navigateToRepository() {}
 
+void _showMobileProjectSelector() {
+  showModalBottomSheet(
+    context: context,
+    shape: const RoundedRectangleBorder(
+      borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+    ),
+    builder: (context) {
+      return _buildMobileProjectList();
+    },
+  );
+}
+
+Widget _buildMobileProjectList() {
+  return FutureBuilder<List<ProjectResponse>>(
+    future: ProjectService().getProjects(),
+    builder: (context, snapshot) {
+      if (snapshot.connectionState == ConnectionState.waiting) {
+        return const Padding(
+          padding: EdgeInsets.all(20),
+          child: Center(child: CircularProgressIndicator()),
+        );
+      }
+      if (!snapshot.hasData || snapshot.data!.isEmpty) {
+        return Padding(
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(Icons.error_outline, color: AppColors.textError, size: 48),
+              const SizedBox(height: 16),
+              Text('Нет проектов', style: TextStyle(color: AppColors.textError)),
+            ],
+          ),
+        );
+      }
+
+      final projects = snapshot.data!;
+      return Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Padding(
+            padding: const EdgeInsets.all(16),
+            child: Text(
+              'Выберите проект',
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            ),
+          ),
+          Expanded(
+            child: ListView.builder(
+              itemCount: projects.length,
+              itemBuilder: (context, index) {
+                final project = projects[index];
+                final isSelected = project.id == _selectedProject?.id;
+                return ListTile(
+                  leading: Icon(
+                    Icons.folder,
+                    color: isSelected ? AppColors.primary : AppColors.textHint,
+                  ),
+                  title: Text(project.name),
+                  trailing: isSelected
+                      ? Icon(Icons.check, color: AppColors.primary)
+                      : null,
+                  onTap: () {
+                    _onProjectSelected(project);
+                    Navigator.pop(context);
+                  },
+                );
+              },
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.all(16),
+            child: SizedBox(
+              width: double.infinity,
+              child: OutlinedButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text('Отмена'),
+              ),
+            ),
+          ),
+        ],
+      );
+    },
+  );
+}
+
   @override
   Widget build(BuildContext context) {
+    final bool isMobile = MediaQuery.of(context).size.width < 768;
+
+    if (isMobile) {
+      return _buildMobileLayout();
+    } else {
+      return _buildDesktopLayout();
+    }
+  }
+
+  Widget _buildMobileLayout() {
+  return Scaffold(
+    backgroundColor: AppColors.background,
+    appBar: AppBar(
+      backgroundColor: Colors.white,
+      title: Text(_selectedProject?.name ?? 'Репозиторий'),
+      centerTitle: true,
+      elevation: 2,
+      actions: [
+        // Кнопка смены проекта
+        IconButton(
+          icon: const Icon(Icons.swap_horiz),
+          onPressed: _showMobileProjectSelector,
+        ),
+      ],
+    ),
+    body: Padding(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        children: [
+          // Поле поиска
+          Container(
+            height: 44,
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(12),
+              boxShadow: const [
+                BoxShadow(
+                  color: AppColors.shadowLight,
+                  offset: Offset(0, 2),
+                  blurRadius: 6,
+                  spreadRadius: -2,
+                ),
+              ],
+            ),
+            child: TextField(
+              controller: _searchController,
+              decoration: InputDecoration(
+                hintText: 'Поиск файлов...',
+                hintStyle: const TextStyle(color: AppColors.textHint),
+                border: InputBorder.none,
+                contentPadding: const EdgeInsets.symmetric(horizontal: 16),
+                prefixIcon: Icon(
+                  Icons.search,
+                  color: AppColors.textHint,
+                  size: 20,
+                ),
+              ),
+              style: const TextStyle(fontSize: 14),
+              onChanged: (value) {
+                // можно добавить фильтрацию
+              },
+            ),
+          ),
+          const SizedBox(height: 16),
+          Expanded(
+            child: _buildContent(),
+          ),
+        ],
+      ),
+    ),
+    bottomNavigationBar: MobileBottomNavBar(
+      onTasksTap: _navigateToTasks,
+      onMembersTap: _navigateToMembers,
+      onRepositoryTap: () {}, // текущая страница
+      onProfileTap: () => Navigator.pushNamed(context, '/profile'),
+      onSettingsTap: () => Navigator.pushNamed(context, '/settings'),
+      isTasksActive: false,
+      isMembersActive: false,
+      isRepositoryActive: true,
+    ),
+    floatingActionButton: FloatingActionButton(
+      backgroundColor: AppColors.primary,
+      onPressed: _showUploadDialog,
+      child: const Icon(Icons.add, color: Colors.white),
+    ),
+  );
+}
+  Widget _buildDesktopLayout() {
     return Scaffold(
       backgroundColor: AppColors.background,
       body: Column(
         children: [
           AppHeader(
             onProjectSelected: _onProjectSelected,
-            initialProject: _selectedProject, 
+            initialProject: _selectedProject,
           ),
           Expanded(
             child: Row(

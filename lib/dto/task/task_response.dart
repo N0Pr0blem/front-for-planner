@@ -1,4 +1,3 @@
-
 import 'package:your_app_name/dto/task/task_detail_response.dart';
 
 class TaskResponse {
@@ -6,8 +5,8 @@ class TaskResponse {
   final String name;
   final bool isCompleted;
   final String assignBy;
-  final String? assignByImage; 
-  final String status; 
+  final String? assignByImage;
+  final String? status; // ← теперь опциональный
 
   TaskResponse({
     required this.id,
@@ -15,7 +14,7 @@ class TaskResponse {
     required this.isCompleted,
     required this.assignBy,
     this.assignByImage,
-    required this.status,
+    this.status, // ← опциональный
   });
 
   factory TaskResponse.fromJson(Map<String, dynamic> json) {
@@ -27,7 +26,7 @@ class TaskResponse {
       assignByImage: json['assign_by_image'] != 'null'
           ? json['assign_by_image'] as String?
           : null,
-      status: json['status'] as String,
+      status: json['status'] as String?, // ← безопасное приведение к String?
     );
   }
 
@@ -40,4 +39,16 @@ class TaskResponse {
         assignByImage = detail.assignedBy.profileImage;
 
   bool get isAssigned => assignBy != 'null null';
+
+  // Вспомогательный метод для отображения статуса
+  String get displayStatus {
+    switch (status?.toUpperCase()) {
+      case 'TO_DO': return 'Нужно сделать';
+      case 'IN_PROGRESS': return 'В работе';
+      case 'REVIEW': return 'На код ревью';
+      case 'IN_TEST': return 'В тестировании';
+      case 'DONE': return 'Готова';
+      default: return status ?? 'Не задан';
+    }
+  }
 }

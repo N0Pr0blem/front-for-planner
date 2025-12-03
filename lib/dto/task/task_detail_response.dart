@@ -2,7 +2,7 @@ class TaskDetailResponse {
   final int id;
   final String name;
   final bool isCompleted;
-  final String status;
+  final String? status;
   final String priority;
   final String complexity;
   final String description;

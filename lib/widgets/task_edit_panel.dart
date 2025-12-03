@@ -88,7 +88,7 @@ class _TaskEditPanelState extends State<TaskEditPanel>
     _selectedComplexity =
         _reverseComplexityMap[widget.task.complexity.toUpperCase()] ??
             'Умеренная';
-    _selectedStatus = widget.task.status;
+    _selectedStatus = widget.task.status!;
 
     _animationController = AnimationController(
       vsync: this,

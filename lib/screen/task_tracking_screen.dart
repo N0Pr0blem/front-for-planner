@@ -139,7 +139,7 @@ class _TaskTrackingScreenState extends State<TaskTrackingScreen> {
       entry.employeeFirstName,
       entry.employeeSecondName,
     ]
-        .where((part) => part != null && part.isNotEmpty && part != 'null')
+        .where((part) => part.isNotEmpty && part != 'null')
         .toList();
 
     return parts.isEmpty ? 'Неизвестный сотрудник' : parts.join(' ');

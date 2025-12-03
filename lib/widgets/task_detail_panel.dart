@@ -84,33 +84,6 @@ class _TaskDetailPanelState extends State<TaskDetailPanel> {
     }
   }
 
-  void _showAddTrekkingDialog(BuildContext context, TaskDetailResponse task) {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
-      ),
-      builder: (context) {
-        return Padding(
-          padding: EdgeInsets.only(
-            bottom: MediaQuery.of(context).viewInsets.bottom,
-          ),
-          child: _MobileAddTrekkingDialog(
-            task: task,
-            onTrekkingAdded: () {
-              if (widget.onTrekkingUpdated != null) {
-                widget.onTrekkingUpdated!();
-              }
-              Navigator.pop(context);
-            },
-            projectId: widget.projectId,
-          ),
-        );
-      },
-    );
-  }
-
   void _navigateToTrackingScreen(BuildContext context) {
     if (widget.task != null) {
       Navigator.push(
@@ -220,13 +193,13 @@ class _TaskDetailPanelState extends State<TaskDetailPanel> {
                     width: 8,
                     height: 8,
                     decoration: BoxDecoration(
-                      color: _getStatusColor(task.status),
+                      color: _getStatusColor(task.status!),
                       shape: BoxShape.circle,
                     ),
                   ),
                   const SizedBox(width: 8),
                   Text(
-                    _getStatusText(task.status),
+                    _getStatusText(task.status!),
                     style: const TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w600,
@@ -532,7 +505,7 @@ class _TaskDetailPanelState extends State<TaskDetailPanel> {
                               const SizedBox(width: 20),
                               Expanded(
                                 child: _StatusComboBox(
-                                  currentStatus: task.status,
+                                  currentStatus: task.status!,
                                   onStatusChanged: (newStatus) async {
                                     try {
                                       await TaskService.updateTaskStatus(
@@ -1379,7 +1352,7 @@ class _TrekkingSectionState extends State<_TrekkingSection> {
       entry.employeeFirstName,
       entry.employeeSecondName,
     ]
-        .where((part) => part != null && part.isNotEmpty && part != 'null')
+        .where((part) => part.isNotEmpty && part != 'null')
         .toList();
 
     return parts.isEmpty ? 'Неизвестный сотрудник' : parts.join(' ');

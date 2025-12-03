@@ -3,7 +3,6 @@ import 'package:your_app_name/dto/task/task_detail_response.dart';
 import '../dto/task/task_response.dart';
 import '../theme/colors.dart';
 import 'dart:convert';
-import '../service/task_service.dart'; 
 
 class TasksListPanel extends StatefulWidget {
   final int projectId;
@@ -60,42 +59,6 @@ class _TasksListPanelState extends State<TasksListPanel> {
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Ошибка обновления задач: $e')),
-      );
-    }
-  }
-
-  // Метод для показа диалога удаления
-  void _showDeleteDialog(TaskResponse task) {
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return _DeleteTaskDialog(
-          task: task,
-          onDelete: () => _deleteTask(task),
-        );
-      },
-    );
-  }
-
-  Future<void> _deleteTask(TaskResponse task) async {
-    try {
-      await TaskService.deleteTask(task.id);
-      // Обновляем список задач
-      if (widget.onTasksUpdated != null) {
-        widget.onTasksUpdated!();
-      }
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Задача "${task.name}" удалена'),
-          backgroundColor: Colors.green,
-        ),
-      );
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Ошибка удаления задачи: $e'),
-          backgroundColor: Colors.red,
-        ),
       );
     }
   }
@@ -287,7 +250,7 @@ class _TasksListPanelState extends State<TasksListPanel> {
         ),
       ),
       child: ListTile(
-        leading: _buildTaskStatusIcon(task.status),
+        leading: _buildTaskStatusIcon(task.status!),
         title: Text(
           task.name,
           style: TextStyle(
@@ -311,10 +274,10 @@ class _TasksListPanelState extends State<TasksListPanel> {
               ),
             const SizedBox(height: 4),
             Text(
-              _getStatusText(task.status),
+              _getStatusText(task.status!),
               style: TextStyle(
                 fontSize: 12,
-                color: _getStatusColor(task.status),
+                color: _getStatusColor(task.status!),
               ),
             ),
           ],
@@ -357,7 +320,7 @@ class _TasksListPanelState extends State<TasksListPanel> {
             padding: const EdgeInsets.all(16),
             child: Row(
               children: [
-                _buildTaskStatusIcon(task.status),
+                _buildTaskStatusIcon(task.status!),
                 const SizedBox(width: 12),
                 Expanded(
                   child: Column(
@@ -384,10 +347,10 @@ class _TasksListPanelState extends State<TasksListPanel> {
                         ),
                       const SizedBox(height: 4),
                       Text(
-                        _getStatusText(task.status),
+                        _getStatusText(task.status!),
                         style: TextStyle(
                           fontSize: 12,
-                          color: _getStatusColor(task.status),
+                          color: _getStatusColor(task.status!),
                         ),
                       ),
                     ],

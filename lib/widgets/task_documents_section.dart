@@ -78,24 +78,6 @@ class _TaskDocumentsSectionState extends State<TaskDocumentsSection> {
     }
   }
 
-  Future<void> _deleteFile(TaskFileResponse file) async {
-    try {
-      await TaskService.deleteTaskFile(widget.taskId, file.id);
-      await _loadTaskFiles(); // Перезагружаем список файлов
-      
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Файл "${file.name}" удален'),
-          backgroundColor: Colors.green,
-        ),
-      );
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Ошибка удаления файла: $e')),
-      );
-    }
-  }
-
   Future<void> _uploadFile() async {
     try {
       FilePickerResult? result = await FilePicker.platform.pickFiles();
