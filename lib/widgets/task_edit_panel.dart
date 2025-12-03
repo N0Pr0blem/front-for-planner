@@ -14,6 +14,7 @@ class TaskEditPanel extends StatefulWidget {
   final VoidCallback? onTrekkingUpdated;
   final int projectId;
   final VoidCallback onSave;
+  final bool isMobile;
 
   const TaskEditPanel({
     Key? key,
@@ -24,6 +25,7 @@ class TaskEditPanel extends StatefulWidget {
     required this.trekking,
     required this.projectId,
     required this.onSave,
+    this.isMobile = false, // ← добавляем
   }) : super(key: key);
 
   @override
@@ -203,6 +205,375 @@ class _TaskEditPanelState extends State<TaskEditPanel>
 
   @override
   Widget build(BuildContext context) {
+    if (widget.isMobile) {
+      return _buildMobileLayout();
+    } else {
+      return _buildDesktopLayout();
+    }
+  }
+
+  Widget _buildMobileLayout() {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(16),
+      child: Form(
+        key: _formKey,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // НАЗВАНИЕ ЗАДАЧИ
+            TextFormField(
+              controller: _nameController,
+              style: const TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+                color: AppColors.textPrimary,
+              ),
+              decoration: InputDecoration(
+                hintText: 'Название задачи',
+                hintStyle: const TextStyle(color: AppColors.textHint),
+                border: InputBorder.none,
+                contentPadding: EdgeInsets.zero,
+              ),
+              validator: (value) {
+                if (value == null || value.isEmpty) {
+                  return 'Введите название задачи';
+                }
+                return null;
+              },
+            ),
+            const SizedBox(height: 24),
+
+            // СТАТУС
+            Text(
+              'Статус',
+              style: const TextStyle(fontSize: 14, color: AppColors.textHint),
+            ),
+            const SizedBox(height: 8),
+            _buildMobileStatusSelector(),
+            const SizedBox(height: 24),
+
+            // ПРИОРИТЕТ
+            Text(
+              'Приоритет',
+              style: const TextStyle(fontSize: 14, color: AppColors.textHint),
+            ),
+            const SizedBox(height: 8),
+            _buildMobileUrgencySelector(),
+            const SizedBox(height: 24),
+
+            // СЛОЖНОСТЬ
+            Text(
+              'Объем',
+              style: const TextStyle(fontSize: 14, color: AppColors.textHint),
+            ),
+            const SizedBox(height: 8),
+            _buildMobileComplexitySelector(),
+            const SizedBox(height: 24),
+
+            // ОПИСАНИЕ
+            Text(
+              'Описание',
+              style: const TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                color: AppColors.textPrimary,
+              ),
+            ),
+            const SizedBox(height: 12),
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: AppColors.background,
+                borderRadius: BorderRadius.circular(12),
+                border:
+                    Border.all(color: AppColors.cardBorder.withOpacity(0.5)),
+              ),
+              child: TextFormField(
+                controller: _descriptionController,
+                maxLines: 6,
+                style:
+                    const TextStyle(fontSize: 14, color: AppColors.textPrimary),
+                decoration: const InputDecoration(
+                  border: InputBorder.none,
+                  hintText: 'Введите описание задачи...',
+                  hintStyle: TextStyle(
+                    color: AppColors.textHint,
+                    fontStyle: FontStyle.italic,
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(height: 24),
+
+            TaskDocumentsSection(taskId: widget.task.id),
+            const SizedBox(height: 32),
+
+            Row(
+              children: [
+                Expanded(
+                  child: OutlinedButton(
+                    onPressed: widget.onClose,
+                    style: OutlinedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12)),
+                    ),
+                    child: const Text('Отмена'),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: ElevatedButton(
+                    onPressed: _isLoading ? null : _saveChanges,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.primary,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12)),
+                    ),
+                    child: _isLoading
+                        ? const SizedBox(
+                            width: 20,
+                            height: 20,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              valueColor:
+                                  AlwaysStoppedAnimation<Color>(Colors.white),
+                            ),
+                          )
+                        : const Text('Сохранить'),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+// Приоритет (Urgency)
+Widget _buildMobileUrgencySelector() {
+  final urgencies = [
+    _UrgencyItem('Срочно', Colors.red),
+    _UrgencyItem('Средний приоритет', Colors.orange),
+    _UrgencyItem('Не срочно', Colors.green),
+  ];
+  final current = urgencies.firstWhere(
+    (u) => u.label == _selectedUrgency,
+    orElse: () => urgencies.first,
+  );
+
+  return GestureDetector(
+    onTap: () {
+      showModalBottomSheet(
+        context: context,
+        builder: (context) {
+          return Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Padding(
+                padding: const EdgeInsets.all(16),
+                child: Text(
+                  'Выберите приоритет',
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                ),
+              ),
+              ...urgencies.map((urgency) {
+                return ListTile(
+                  title: Text(urgency.label),
+                  leading: Container(
+                    width: 8,
+                    height: 8,
+                    decoration: BoxDecoration(
+                      color: urgency.color,
+                      shape: BoxShape.circle,
+                    ),
+                  ),
+                  onTap: () {
+                    setState(() => _selectedUrgency = urgency.label);
+                    Navigator.pop(context);
+                  },
+                );
+              }).toList(),
+              Padding(
+                padding: const EdgeInsets.all(16),
+                child: OutlinedButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: const Text('Отмена'),
+                ),
+              ),
+            ],
+          );
+        },
+      );
+    },
+    child: Container(
+      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: AppColors.cardBorder),
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(current.label),
+          const Icon(Icons.arrow_drop_down, color: AppColors.textHint),
+        ],
+      ),
+    ),
+  );
+}
+
+// Объем (Complexity)
+Widget _buildMobileComplexitySelector() {
+  final complexities = [
+    _ComplexityItem('Большая', Colors.purple),
+    _ComplexityItem('Умеренная', Colors.blue),
+    _ComplexityItem('Небольшая', Colors.teal),
+  ];
+  final current = complexities.firstWhere(
+    (c) => c.label == _selectedComplexity,
+    orElse: () => complexities.first,
+  );
+
+  return GestureDetector(
+    onTap: () {
+      showModalBottomSheet(
+        context: context,
+        builder: (context) {
+          return Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Padding(
+                padding: const EdgeInsets.all(16),
+                child: Text(
+                  'Выберите объем',
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                ),
+              ),
+              ...complexities.map((complexity) {
+                return ListTile(
+                  title: Text(complexity.label),
+                  leading: Container(
+                    width: 8,
+                    height: 8,
+                    decoration: BoxDecoration(
+                      color: complexity.color,
+                      shape: BoxShape.circle,
+                    ),
+                  ),
+                  onTap: () {
+                    setState(() => _selectedComplexity = complexity.label);
+                    Navigator.pop(context);
+                  },
+                );
+              }).toList(),
+              Padding(
+                padding: const EdgeInsets.all(16),
+                child: OutlinedButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: const Text('Отмена'),
+                ),
+              ),
+            ],
+          );
+        },
+      );
+    },
+    child: Container(
+      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: AppColors.cardBorder),
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(current.label),
+          const Icon(Icons.arrow_drop_down, color: AppColors.textHint),
+        ],
+      ),
+    ),
+  );
+}
+  Widget _buildMobileStatusSelector() {
+    final statuses = [
+      _StatusItem('TO_DO', 'Нужно сделать', Colors.grey),
+      _StatusItem('IN_PROGRESS', 'В работе', Colors.blue),
+      _StatusItem('REVIEW', 'На код ревью', Colors.orange),
+      _StatusItem(
+          'IN_TEST', 'В тестировании', const Color.fromARGB(255, 255, 0, 242)),
+      _StatusItem('DONE', 'Готова', Colors.green),
+    ];
+    final current = statuses.firstWhere((s) => s.value == _selectedStatus);
+
+    return GestureDetector(
+      onTap: () {
+        showModalBottomSheet(
+          context: context,
+          builder: (context) {
+            return Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Text(
+                    'Выберите статус',
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  ),
+                ),
+                ...statuses.map((status) {
+                  return ListTile(
+                    title: Text(status.label),
+                    leading: Container(
+                      width: 8,
+                      height: 8,
+                      decoration: BoxDecoration(
+                        color: status.color,
+                        shape: BoxShape.circle,
+                      ),
+                    ),
+                    onTap: () {
+                      setState(() => _selectedStatus = status.value);
+                      Navigator.pop(context);
+                    },
+                  );
+                }).toList(),
+                Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: OutlinedButton(
+                    onPressed: () => Navigator.pop(context),
+                    child: const Text('Отмена'),
+                  ),
+                ),
+              ],
+            );
+          },
+        );
+      },
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: AppColors.cardBorder),
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(current.label),
+            const Icon(Icons.arrow_drop_down, color: AppColors.textHint),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildDesktopLayout() {
     return Container(
       color: Colors.white,
       child: LayoutBuilder(

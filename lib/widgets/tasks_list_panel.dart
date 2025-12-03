@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:your_app_name/dto/task/task_detail_response.dart';
 import '../dto/task/task_response.dart';
-import '../dto/task/task_detail_response.dart';
 import '../theme/colors.dart';
 import 'dart:convert';
-import '../service/task_service.dart'; // Добавляем импорт сервиса
+import '../service/task_service.dart'; 
 
 class TasksListPanel extends StatefulWidget {
   final int projectId;
@@ -13,6 +13,7 @@ class TasksListPanel extends StatefulWidget {
   final List<TaskResponse> tasks;
   final VoidCallback? onTasksUpdated;
   final Function(TaskDetailResponse)? onTaskCreated;
+  final bool isMobile;
 
   const TasksListPanel({
     Key? key,
@@ -23,6 +24,7 @@ class TasksListPanel extends StatefulWidget {
     required this.tasks,
     this.onTasksUpdated,
     this.onTaskCreated,
+    this.isMobile = false,
   }) : super(key: key);
 
   @override
@@ -62,16 +64,26 @@ class _TasksListPanelState extends State<TasksListPanel> {
     }
   }
 
-  // Новый метод для удаления задачи
+  // Метод для показа диалога удаления
+  void _showDeleteDialog(TaskResponse task) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return _DeleteTaskDialog(
+          task: task,
+          onDelete: () => _deleteTask(task),
+        );
+      },
+    );
+  }
+
   Future<void> _deleteTask(TaskResponse task) async {
     try {
       await TaskService.deleteTask(task.id);
-      
       // Обновляем список задач
       if (widget.onTasksUpdated != null) {
         widget.onTasksUpdated!();
       }
-      
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Задача "${task.name}" удалена'),
@@ -88,167 +100,243 @@ class _TasksListPanelState extends State<TasksListPanel> {
     }
   }
 
-  // Метод для показа диалога удаления
-  void _showDeleteDialog(TaskResponse task) {
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return _DeleteTaskDialog(
-          task: task,
-          onDelete: () => _deleteTask(task),
-        );
-      },
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
-    final isTaskSelected = widget.selectedTaskId != null;
+    final isTaskSelected = widget.selectedTaskId != null && widget.selectedTaskId!.isNotEmpty;
 
+    if (widget.isMobile) {
+      return _buildMobileLayout(context, isTaskSelected);
+    } else {
+      return _buildDesktopLayout(context, isTaskSelected);
+    }
+  }
+
+  Widget _buildMobileLayout(BuildContext context, bool isTaskSelected) {
     return Container(
       color: AppColors.background,
       padding: const EdgeInsets.all(16),
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Шапка с кнопкой добавления, поиском и удаления
           Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              // Кнопка добавления
-              Container(
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(12),
-                  boxShadow: const [
-                    BoxShadow(
-                      color: AppColors.shadowLight,
-                      offset: Offset(0, 4),
-                      blurRadius: 8,
-                      spreadRadius: -2,
-                    ),
-                  ],
-                ),
-                child: Material(
-                  borderRadius: BorderRadius.circular(12),
-                  child: InkWell(
-                    borderRadius: BorderRadius.circular(12),
-                    onTap: () {
-                      widget.onAddTask();
-                    },
-                    child: Container(
-                      width: 36,
-                      height: 36,
-                      decoration: BoxDecoration(
-                        gradient: AppGradients.primaryButton,
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: const Icon(
-                        Icons.add,
-                        color: AppColors.textOnPrimary,
-                        size: 20,
-                      ),
-                    ),
-                  ),
+              Text(
+                'Задачи (${widget.tasks.length})',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: AppColors.textPrimary,
                 ),
               ),
-              const SizedBox(width: 12),
-              
-              // Поле поиска
-              Expanded(
-                child: Container(
-                  height: 36,
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(12),
-                    boxShadow: const [
-                      BoxShadow(
-                        color: AppColors.shadowLight,
-                        offset: Offset(0, 4),
-                        blurRadius: 8,
-                        spreadRadius: -2,
-                      ),
-                    ],
-                  ),
-                  child: TextField(
-                    decoration: InputDecoration(
-                      hintText: 'Search...',
-                      hintStyle: const TextStyle(color: AppColors.textHint),
-                      border: InputBorder.none,
-                      contentPadding: const EdgeInsets.symmetric(horizontal: 12),
-                      prefixIcon: Icon(
-                        Icons.search,
-                        color: AppColors.textHint,
-                        size: 20,
-                      ),
-                    ),
-                    style: const TextStyle(fontSize: 14),
-                  ),
-                ),
+              IconButton(
+                icon: Icon(Icons.add, color: AppColors.primary),
+                onPressed: widget.onAddTask,
               ),
             ],
           ),
           const SizedBox(height: 16),
-          
-          // Список задач
           Expanded(
-            child: RefreshIndicator(
-              onRefresh: _refreshTasks,
-              child: widget.tasks.isEmpty
-                  ? const Center(
-                      child: Text(
-                        'Нет задач',
-                        style: TextStyle(
-                          color: AppColors.textHint,
-                          fontSize: 16,
+            child: widget.tasks.isEmpty
+                ? Center(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          Icons.assignment_outlined, // Исправленная иконка
+                          size: 64,
+                          color: AppColors.textHint.withOpacity(0.5),
                         ),
-                      ),
-                    )
-                  : ListView.builder(
+                        const SizedBox(height: 16),
+                        Text(
+                          'Нет задач',
+                          style: TextStyle(
+                            color: AppColors.textHint,
+                            fontSize: 16,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        TextButton(
+                          onPressed: widget.onAddTask,
+                          child: const Text('Создать первую задачу'),
+                        ),
+                      ],
+                    ),
+                  )
+                : RefreshIndicator(
+                    onRefresh: _refreshTasks,
+                    child: ListView.builder(
                       itemCount: widget.tasks.length,
                       itemBuilder: (context, index) {
                         final task = widget.tasks[index];
-                        final isSelected = task.id.toString() == widget.selectedTaskId;
-                        return _TaskListItem(
-                          task: task,
-                          isSelected: isSelected,
-                          onTap: () => widget.onTaskSelected(task),
-                          onDelete: () => _showDeleteDialog(task),
-                          showDeleteButton: !isTaskSelected, // Показываем кнопку удаления только когда панель открыта полностью
-                        );
+                        return _buildMobileTaskCard(task, context);
                       },
                     ),
-            ),
+                  ),
           ),
         ],
       ),
     );
   }
-}
 
-class _TaskListItem extends StatelessWidget {
-  final TaskResponse task;
-  final bool isSelected;
-  final VoidCallback onTap;
-  final VoidCallback onDelete;
-  final bool showDeleteButton;
+  Widget _buildDesktopLayout(BuildContext context, bool isTaskSelected) {
+    return Container(
+      color: AppColors.background,
+      padding: const EdgeInsets.all(20),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: const EdgeInsets.only(bottom: 20),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  'Задачи проекта',
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.textPrimary,
+                  ),
+                ),
+                // Если задача выбрана, показываем иконку вместо кнопки
+                isTaskSelected
+                    ? IconButton(
+                        onPressed: widget.onAddTask,
+                        icon: Icon(
+                          Icons.add,
+                          color: AppColors.primary,
+                          size: 24,
+                        ),
+                        tooltip: 'Добавить задачу',
+                        style: IconButton.styleFrom(
+                          backgroundColor: AppColors.primary.withOpacity(0.1),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                      )
+                    : ElevatedButton.icon(
+                        onPressed: widget.onAddTask,
+                        icon: const Icon(Icons.add, size: 16),
+                        label: const Text('Добавить'),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppColors.primary,
+                          foregroundColor: Colors.white,
+                        ),
+                      ),
+              ],
+            ),
+          ),
+          Expanded(
+            child: widget.tasks.isEmpty
+                ? Center(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          Icons.assignment_outlined, // Исправленная иконка
+                          size: 64,
+                          color: AppColors.textHint.withOpacity(0.5),
+                        ),
+                        const SizedBox(height: 16),
+                        Text(
+                          'Нет задач',
+                          style: TextStyle(
+                            color: AppColors.textHint,
+                            fontSize: 16,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        if (!isTaskSelected)
+                          TextButton(
+                            onPressed: widget.onAddTask,
+                            child: const Text('Создать первую задачу'),
+                          ),
+                      ],
+                    ),
+                  )
+                : RefreshIndicator(
+                    onRefresh: _refreshTasks,
+                    child: ListView.builder(
+                      itemCount: widget.tasks.length,
+                      itemBuilder: (context, index) {
+                        final task = widget.tasks[index];
+                        final isSelected = widget.selectedTaskId == task.id.toString();
+                        return _buildDesktopTaskCard(task, context, isSelected);
+                      },
+                    ),
+                  ),
+          ),
+        ],
+      ),
+    );
+  }
 
-  const _TaskListItem({
-    Key? key,
-    required this.task,
-    required this.isSelected,
-    required this.onTap,
-    required this.onDelete,
-    required this.showDeleteButton,
-  }) : super(key: key);
+  Widget _buildMobileTaskCard(TaskResponse task, BuildContext context) {
+    final isSelected = widget.selectedTaskId == task.id.toString();
+    
+    return Card(
+      margin: const EdgeInsets.only(bottom: 12),
+      elevation: 2,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+        side: BorderSide(
+          color: isSelected ? AppColors.primary : Colors.transparent,
+          width: isSelected ? 2 : 0,
+        ),
+      ),
+      child: ListTile(
+        leading: _buildTaskStatusIcon(task.status),
+        title: Text(
+          task.name,
+          style: TextStyle(
+            fontWeight: FontWeight.w500,
+            color: isSelected ? AppColors.primary : AppColors.textPrimary,
+          ),
+        ),
+        subtitle: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            if (task.assignBy.isNotEmpty)
+              _buildAssignedMobileView(task)
+            else
+              const Text(
+                'Можно взять в работу',
+                style: TextStyle(
+                  fontSize: 12,
+                  color: AppColors.textHint,
+                  fontStyle: FontStyle.italic,
+                ),
+              ),
+            const SizedBox(height: 4),
+            Text(
+              _getStatusText(task.status),
+              style: TextStyle(
+                fontSize: 12,
+                color: _getStatusColor(task.status),
+              ),
+            ),
+          ],
+        ),
+        trailing: Icon(Icons.chevron_right, color: AppColors.textHint),
+        onTap: () => widget.onTaskSelected(task),
+      ),
+    );
+  }
 
-  @override
-  Widget build(BuildContext context) {
+  Widget _buildDesktopTaskCard(TaskResponse task, BuildContext context, bool isSelected) {
     return Container(
       margin: const EdgeInsets.only(bottom: 8),
       decoration: BoxDecoration(
         color: isSelected ? AppColors.primary.withOpacity(0.1) : Colors.white,
         borderRadius: BorderRadius.circular(12),
-        border: isSelected
-            ? Border.all(color: AppColors.primary, width: 2)
-            : Border.all(color: AppColors.cardBorder.withOpacity(0.5)),
+        border: Border.all(
+          color: isSelected
+              ? AppColors.primary
+              : AppColors.cardBorder.withOpacity(0.5),
+          width: isSelected ? 2 : 1,
+        ),
         boxShadow: isSelected
             ? []
             : const [
@@ -264,12 +352,13 @@ class _TaskListItem extends StatelessWidget {
         color: Colors.transparent,
         child: InkWell(
           borderRadius: BorderRadius.circular(12),
-          onTap: onTap,
-          child: Container(
-            padding: const EdgeInsets.all(12),
+          onTap: () => widget.onTaskSelected(task),
+          child: Padding(
+            padding: const EdgeInsets.all(16),
             child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                _buildTaskStatusIcon(task.status),
+                const SizedBox(width: 12),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -277,15 +366,13 @@ class _TaskListItem extends StatelessWidget {
                       Text(
                         task.name,
                         style: TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.bold,
+                          fontWeight: FontWeight.w600,
                           color: isSelected ? AppColors.primary : AppColors.textPrimary,
                         ),
                       ),
                       const SizedBox(height: 8),
-                      // Используем assignedTo из модели TaskResponse
-                      if (task.assignByImage != null && task.assignBy.isNotEmpty)
-                        _buildAssignedView(task)
+                      if (task.assignBy.isNotEmpty)
+                        _buildAssignedDesktopView(task)
                       else
                         const Text(
                           'Можно взять в работу',
@@ -295,14 +382,19 @@ class _TaskListItem extends StatelessWidget {
                             fontStyle: FontStyle.italic,
                           ),
                         ),
+                      const SizedBox(height: 4),
+                      Text(
+                        _getStatusText(task.status),
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: _getStatusColor(task.status),
+                        ),
+                      ),
                     ],
                   ),
                 ),
-                // Кнопка удаления (показываем только когда панель открыта полностью)
-                if (showDeleteButton)
-                  _TaskDeleteButton(
-                    onDelete: onDelete,
-                  ),
+                if (isSelected)
+                  Icon(Icons.check_circle, color: AppColors.primary),
               ],
             ),
           ),
@@ -310,130 +402,158 @@ class _TaskListItem extends StatelessWidget {
       ),
     );
   }
+  Widget _buildTaskStatusIcon(String status) {
+  IconData icon;
+  Color color;
 
-  Widget _buildAssignedView(TaskResponse task) {
+  switch (status.toUpperCase()) {
+    case 'TO_DO':
+      icon = Icons.radio_button_unchecked;
+      color = Colors.blueGrey;
+      break;
+    case 'IN_PROGRESS':
+      icon = Icons.autorenew;
+      color = Colors.blue;
+      break;
+    case 'REVIEW':
+      icon = Icons.visibility;
+      color = Colors.purple;
+      break;
+    case 'IN_TEST':
+      icon = Icons.bug_report;
+      color = Colors.orange;
+      break;
+    case 'DONE':
+      icon = Icons.check_circle;
+      color = Colors.green;
+      break;
+    default:
+      icon = Icons.help_outline;
+      color = Colors.grey;
+  }
+
+  return Icon(icon, color: color, size: 24);
+}
+
+String _getStatusText(String status) {
+  switch (status.toUpperCase()) {
+    case 'TO_DO':
+      return 'Нужно сделать';
+    case 'IN_PROGRESS':
+      return 'В работе';
+    case 'REVIEW':
+      return 'На код ревью';
+    case 'IN_TEST':
+      return 'В тестировании';
+    case 'DONE':
+      return 'Готова';
+    default:
+      return status;
+  }
+}
+
+Color _getStatusColor(String status) {
+  switch (status.toUpperCase()) {
+    case 'TO_DO':
+      return Colors.blueGrey;
+    case 'IN_PROGRESS':
+      return Colors.blue;
+    case 'REVIEW':
+      return Colors.purple;
+    case 'IN_TEST':
+      return Colors.orange;
+    case 'DONE':
+      return Colors.green;
+    default:
+      return AppColors.textHint;
+  }
+}
+
+  Widget _buildAssignedMobileView(TaskResponse task) {
     return Row(
       children: [
-        // Аватарка из assignedTo
-        if (task.assignByImage != null)
-          ClipOval(
-            child: Image.memory(
-              base64Decode(task.assignByImage!),
-              width: 24,
-              height: 24,
-              fit: BoxFit.cover,
-              errorBuilder: (context, error, stackTrace) {
-                return _defaultAvatar();
-              },
+        // Аватарка
+        if (task.assignByImage != null && task.assignByImage!.isNotEmpty)
+          Container(
+            width: 20,
+            height: 20,
+            margin: const EdgeInsets.only(right: 8),
+            child: ClipOval(
+              child: Image.memory(
+                base64Decode(task.assignByImage!),
+                fit: BoxFit.cover,
+                errorBuilder: (context, error, stackTrace) {
+                  return _defaultAvatar(20);
+                },
+              ),
             ),
           )
         else
-          _defaultAvatar(),
+          _defaultAvatar(20),
         const SizedBox(width: 8),
         Expanded(
           child: Text(
-            task.assignBy, // используем fullName
+            task.assignBy,
             style: const TextStyle(fontSize: 12, color: AppColors.textHint),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
           ),
         ),
       ],
     );
   }
 
-  Widget _defaultAvatar() {
+  Widget _buildAssignedDesktopView(TaskResponse task) {
+    return Row(
+      children: [
+        // Аватарка
+        if (task.assignByImage != null && task.assignByImage!.isNotEmpty)
+          Container(
+            width: 24,
+            height: 24,
+            margin: const EdgeInsets.only(right: 8),
+            child: ClipOval(
+              child: Image.memory(
+                base64Decode(task.assignByImage!),
+                fit: BoxFit.cover,
+                errorBuilder: (context, error, stackTrace) {
+                  return _defaultAvatar(24);
+                },
+              ),
+            ),
+          )
+        else
+          _defaultAvatar(24),
+        const SizedBox(width: 8),
+        Expanded(
+          child: Text(
+            task.assignBy,
+            style: const TextStyle(fontSize: 12, color: AppColors.textHint),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _defaultAvatar(double size) {
     return Container(
-      width: 24,
-      height: 24,
+      width: size,
+      height: size,
       decoration: BoxDecoration(
-        color: AppColors.primary.withOpacity(0.1),
         shape: BoxShape.circle,
+        color: AppColors.primary.withOpacity(0.1),
       ),
       child: Icon(
         Icons.person,
-        size: 14,
+        size: size * 0.6,
         color: AppColors.primary,
       ),
     );
   }
 }
-
-// Кнопка удаления в списке задач
-class _TaskDeleteButton extends StatelessWidget {
-  final VoidCallback onDelete;
-
-  const _TaskDeleteButton({
-    Key? key,
-    required this.onDelete,
-  }) : super(key: key);
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onDelete,
-      child: Container(
-        padding: const EdgeInsets.all(6),
-        decoration: BoxDecoration(
-          color: AppColors.textError.withOpacity(0.1),
-          borderRadius: BorderRadius.circular(8),
-        ),
-        child: Icon(
-          Icons.delete_outline,
-          color: AppColors.textError,
-          size: 16,
-        ),
-      ),
-    );
-  }
-}
-
-// Кнопка удаления в хедере
-class _DeleteTaskButton extends StatelessWidget {
-  final VoidCallback onTap;
-
-  const _DeleteTaskButton({
-    Key? key,
-    required this.onTap,
-  }) : super(key: key);
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: const [
-          BoxShadow(
-            color: AppColors.shadowLight,
-            offset: Offset(0, 4),
-            blurRadius: 8,
-            spreadRadius: -2,
-          ),
-        ],
-      ),
-      child: Material(
-        borderRadius: BorderRadius.circular(12),
-        child: InkWell(
-          borderRadius: BorderRadius.circular(12),
-          onTap: onTap,
-          child: Container(
-            width: 36,
-            height: 36,
-            decoration: BoxDecoration(
-              color: AppColors.textError.withOpacity(0.1),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Icon(
-              Icons.delete_outline,
-              color: AppColors.textError,
-              size: 20,
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-// Диалоговое окно подтверждения удаления
+// Диалоговое окно подтверждения удаления (оставляем как было)
 class _DeleteTaskDialog extends StatefulWidget {
   final TaskResponse task;
   final VoidCallback onDelete;
@@ -451,7 +571,6 @@ class _DeleteTaskDialog extends StatefulWidget {
 class _DeleteTaskDialogState extends State<_DeleteTaskDialog>
     with SingleTickerProviderStateMixin {
   bool _isLoading = false;
-
   late AnimationController _animationController;
   late Animation<double> _opacityAnimation;
   late Animation<Offset> _slideAnimation;
@@ -463,23 +582,24 @@ class _DeleteTaskDialogState extends State<_DeleteTaskDialog>
       vsync: this,
       duration: const Duration(milliseconds: 300),
     );
-
     _opacityAnimation = Tween<double>(
       begin: 0.0,
       end: 1.0,
-    ).animate(CurvedAnimation(
-      parent: _animationController,
-      curve: Curves.easeOut,
-    ));
-
+    ).animate(
+      CurvedAnimation(
+        parent: _animationController,
+        curve: Curves.easeOut,
+      ),
+    );
     _slideAnimation = Tween<Offset>(
       begin: const Offset(0, -0.5),
       end: Offset.zero,
-    ).animate(CurvedAnimation(
-      parent: _animationController,
-      curve: Curves.easeOut,
-    ));
-
+    ).animate(
+      CurvedAnimation(
+        parent: _animationController,
+        curve: Curves.easeOut,
+      ),
+    );
     _animationController.forward();
   }
 
@@ -493,10 +613,8 @@ class _DeleteTaskDialogState extends State<_DeleteTaskDialog>
     setState(() {
       _isLoading = true;
     });
-
     try {
       widget.onDelete();
-      
       if (mounted) {
         Navigator.of(context).pop();
       }
@@ -570,20 +688,14 @@ class _DeleteTaskDialogState extends State<_DeleteTaskDialog>
                         ),
                       ),
                       IconButton(
-                        icon: Icon(
-                          Icons.close,
-                          color: AppColors.textHint,
-                          size: 20,
-                        ),
+                        icon: Icon(Icons.close, color: AppColors.textHint, size: 20),
                         onPressed: _closeDialog,
                         splashRadius: 20,
                         padding: EdgeInsets.zero,
                       ),
                     ],
                   ),
-
                   const SizedBox(height: 24),
-
                   // Текст подтверждения
                   Text(
                     'Вы уверены, что хотите удалить задачу "${widget.task.name}"?',
@@ -592,9 +704,7 @@ class _DeleteTaskDialogState extends State<_DeleteTaskDialog>
                       color: AppColors.textPrimary,
                     ),
                   ),
-
                   const SizedBox(height: 8),
-
                   Text(
                     'Это действие нельзя отменить.',
                     style: TextStyle(
@@ -602,9 +712,7 @@ class _DeleteTaskDialogState extends State<_DeleteTaskDialog>
                       color: AppColors.textHint,
                     ),
                   ),
-
                   const SizedBox(height: 32),
-
                   // Кнопки
                   Row(
                     children: [
@@ -632,7 +740,7 @@ class _DeleteTaskDialogState extends State<_DeleteTaskDialog>
                                   color: Colors.white,
                                   borderRadius: BorderRadius.circular(12),
                                 ),
-                                child: Center(
+                                child: const Center(
                                   child: Text(
                                     'Отмена',
                                     style: TextStyle(
@@ -679,11 +787,11 @@ class _DeleteTaskDialogState extends State<_DeleteTaskDialog>
                                           height: 20,
                                           child: CircularProgressIndicator(
                                             strokeWidth: 2,
-                                            valueColor: AlwaysStoppedAnimation<Color>(
-                                                Colors.white),
+                                            valueColor:
+                                                AlwaysStoppedAnimation<Color>(Colors.white),
                                           ),
                                         )
-                                      : Text(
+                                      : const Text(
                                           'Удалить',
                                           style: TextStyle(
                                             color: Colors.white,

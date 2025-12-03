@@ -7,6 +7,7 @@ class TaskResponse {
   final bool isCompleted;
   final String assignBy;
   final String? assignByImage; 
+  final String status; 
 
   TaskResponse({
     required this.id,
@@ -14,6 +15,7 @@ class TaskResponse {
     required this.isCompleted,
     required this.assignBy,
     this.assignByImage,
+    required this.status,
   });
 
   factory TaskResponse.fromJson(Map<String, dynamic> json) {
@@ -25,6 +27,7 @@ class TaskResponse {
       assignByImage: json['assign_by_image'] != 'null'
           ? json['assign_by_image'] as String?
           : null,
+      status: json['status'] as String,
     );
   }
 
@@ -33,6 +36,7 @@ class TaskResponse {
         name = detail.name,
         isCompleted = detail.isCompleted,
         assignBy = detail.assignedBy.fullName,
+        status = detail.status,
         assignByImage = detail.assignedBy.profileImage;
 
   bool get isAssigned => assignBy != 'null null';
