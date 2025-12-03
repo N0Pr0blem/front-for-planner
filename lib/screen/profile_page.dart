@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:your_app_name/widgets/mobile_bottom_nav_bar.dart';
 import '../dto/user/user_response.dart';
 import '../dto/project/project_response.dart';
 import '../dto/task/task_response.dart';
@@ -146,6 +147,51 @@ class _ProfilePageState extends State<ProfilePage> {
 
   @override
   Widget build(BuildContext context) {
+    final bool isMobile = MediaQuery.of(context).size.width < 768;
+
+    if (isMobile) {
+      return _buildMobileLayout();
+    } else {
+      return _buildDesktopLayout();
+    }
+  }
+
+  Widget _buildMobileLayout() {
+    return Scaffold(
+      backgroundColor: Colors.white,
+      appBar: AppBar(
+        backgroundColor: Colors.white,
+        title: const Text('Профиль'),
+        centerTitle: true,
+        elevation: 2,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.logout, color: Colors.red),
+            onPressed: _logout,
+            tooltip: 'Выйти',
+          ),
+        ],
+      ),
+      body: _isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : _user != null
+              ? _buildContent()
+              : const Center(child: Text('Профиль не загружен')),
+      bottomNavigationBar: MobileBottomNavBar(
+        onTasksTap: _goBackToTasks,
+        onMembersTap: () => Navigator.pushReplacementNamed(context, '/members'),
+        onRepositoryTap: () =>
+            Navigator.pushReplacementNamed(context, '/repository'),
+        onProfileTap: () {}, // текущая страница
+        onSettingsTap: () => Navigator.pushNamed(context, '/settings'),
+        isTasksActive: false,
+        isMembersActive: false,
+        isRepositoryActive: false,
+      ),
+    );
+  }
+
+  Widget _buildDesktopLayout() {
     return Scaffold(
       backgroundColor: Colors.white,
       body: Row(
@@ -170,7 +216,6 @@ class _ProfilePageState extends State<ProfilePage> {
   }
 
   Widget _buildContent() {
-    // Добавляем явную проверку
     if (_user == null) {
       return Center(
         child: Column(
@@ -192,11 +237,12 @@ class _ProfilePageState extends State<ProfilePage> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             _ProfileSection(
-              user: _user!, // Теперь безопасно
+              user: _user!,
               isEditing: _isEditingProfile,
               onEditToggle: _toggleEditProfile,
               onCancelEdit: _cancelEdit,
               onProfileUpdated: _loadData,
+              isMobile: MediaQuery.of(context).size.width < 768, // ← передаём
             ),
             const SizedBox(height: 32),
             _MyProjectsSection(
@@ -336,6 +382,7 @@ class _ProfileSection extends StatefulWidget {
   final VoidCallback onEditToggle;
   final VoidCallback onCancelEdit;
   final VoidCallback onProfileUpdated;
+  final bool isMobile;
 
   const _ProfileSection({
     Key? key,
@@ -344,6 +391,7 @@ class _ProfileSection extends StatefulWidget {
     required this.onEditToggle,
     required this.onCancelEdit,
     required this.onProfileUpdated,
+    this.isMobile = false,
   }) : super(key: key);
 
   @override
@@ -514,24 +562,6 @@ class __ProfileSectionState extends State<_ProfileSection> {
                   icon: Icons.edit,
                   label: 'Редактировать',
                   onTap: widget.onEditToggle,
-                )
-              else
-                Row(
-                  children: [
-                    _ActionButton(
-                      icon: Icons.cancel,
-                      label: 'Отмена',
-                      onTap: widget.onCancelEdit,
-                      color: Colors.grey,
-                    ),
-                    const SizedBox(width: 12),
-                    _ActionButton(
-                      icon: Icons.save,
-                      label: 'Сохранить',
-                      onTap: _saveProfile,
-                      color: Colors.green,
-                    ),
-                  ],
                 ),
             ],
           ),
@@ -543,6 +573,34 @@ class __ProfileSectionState extends State<_ProfileSection> {
   }
 
   Widget _buildProfileView() {
+    if (widget.isMobile) {
+      return Column(
+        children: [
+          _buildAvatar(),
+          const SizedBox(height: 16),
+          Text(
+            widget.user.displayName,
+            style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 4),
+          Text(
+            widget.user.username,
+            style: const TextStyle(fontSize: 16, color: AppColors.textHint),
+            textAlign: TextAlign.center,
+          ),
+          if (widget.user.registrationDate != null) ...[
+            const SizedBox(height: 12),
+            Text(
+              'Зарегистрирован: ${_formatDate(widget.user.registrationDate!)}',
+              style: const TextStyle(fontSize: 14, color: AppColors.textHint),
+              textAlign: TextAlign.center,
+            ),
+          ],
+        ],
+      );
+    }
+
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -552,31 +610,19 @@ class __ProfileSectionState extends State<_ProfileSection> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                widget.user.displayName,
-                style: const TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                  color: AppColors.textPrimary,
-                ),
-              ),
+              Text(widget.user.displayName,
+                  style: const TextStyle(
+                      fontSize: 20, fontWeight: FontWeight.bold)),
               const SizedBox(height: 8),
-              Text(
-                widget.user.username,
-                style: const TextStyle(
-                  fontSize: 16,
-                  color: AppColors.textHint,
-                ),
-              ),
+              Text(widget.user.username,
+                  style:
+                      const TextStyle(fontSize: 16, color: AppColors.textHint)),
               const SizedBox(height: 16),
               if (widget.user.registrationDate != null)
                 Text(
-                  'Зарегистрирован: ${_formatDate(widget.user.registrationDate!)}',
-                  style: const TextStyle(
-                    fontSize: 14,
-                    color: AppColors.textHint,
-                  ),
-                ),
+                    'Зарегистрирован: ${_formatDate(widget.user.registrationDate!)}',
+                    style: const TextStyle(
+                        fontSize: 14, color: AppColors.textHint)),
             ],
           ),
         ),
@@ -587,7 +633,7 @@ class __ProfileSectionState extends State<_ProfileSection> {
   Widget _buildProfileEdit() {
     return Column(
       children: [
-        // Аватар с возможностью изменения
+        // Аватар — сверху
         GestureDetector(
           onTap: _pickImage,
           child: MouseRegion(
@@ -606,11 +652,7 @@ class __ProfileSectionState extends State<_ProfileSection> {
                   child: const Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Icon(
-                        Icons.photo_library,
-                        color: Colors.white,
-                        size: 30,
-                      ),
+                      Icon(Icons.photo_library, color: Colors.white, size: 30),
                       SizedBox(height: 4),
                       Text(
                         'Изменить',
@@ -628,33 +670,87 @@ class __ProfileSectionState extends State<_ProfileSection> {
           ),
         ),
         const SizedBox(height: 16),
-        Text(
-          'Нажмите на фото для выбора изображения с компьютера',
-          style: TextStyle(
-            fontSize: 12,
-            color: AppColors.textHint,
+        if (widget.isMobile)
+          Text(
+            'Нажмите на фото, чтобы изменить аватар',
+            style: TextStyle(fontSize: 12, color: AppColors.textHint),
+            textAlign: TextAlign.center,
+          )
+        else
+          Text(
+            'Нажмите на фото для выбора изображения с компьютера',
+            style: TextStyle(fontSize: 12, color: AppColors.textHint),
+            textAlign: TextAlign.center,
           ),
-          textAlign: TextAlign.center,
-        ),
         const SizedBox(height: 24),
 
-        _EditTextField(
-          controller: _firstNameController,
-          label: 'Имя',
-          hintText: 'Введите имя',
-          enabled: false,
-        ),
+        // Имя (только для просмотра)
+        if (widget.isMobile)
+          _EditTextField(
+            controller: _firstNameController,
+            label: 'Имя',
+            hintText: 'Имя',
+            enabled: false,
+            isMobile: true,
+          )
+        else
+          _EditTextField(
+            controller: _firstNameController,
+            label: 'Имя',
+            hintText: 'Введите имя',
+            enabled: false,
+          ),
         const SizedBox(height: 16),
+
+        // Отчество
         _EditTextField(
           controller: _secondNameController,
           label: 'Отчество',
-          hintText: 'Введите отчество',
+          hintText: widget.isMobile ? 'Отчество' : 'Введите отчество',
+          isMobile: widget.isMobile,
         ),
         const SizedBox(height: 16),
+
+        // Фамилия
         _EditTextField(
           controller: _lastNameController,
           label: 'Фамилия',
-          hintText: 'Введите фамилию',
+          hintText: widget.isMobile ? 'Фамилия' : 'Введите фамилию',
+          isMobile: widget.isMobile,
+        ),
+        const SizedBox(height: 24),
+
+        // Кнопки "Отмена" и "Сохранить" — отдельно, внизу
+        Row(
+          children: [
+            Expanded(
+              child: OutlinedButton(
+                onPressed: widget.onCancelEdit,
+                style: OutlinedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+                child: const Text('Отмена'),
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: ElevatedButton(
+                onPressed: _saveProfile,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.primary,
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+                child: const Text('Сохранить'),
+              ),
+            ),
+          ],
         ),
       ],
     );
@@ -1169,6 +1265,7 @@ class _EditTextField extends StatelessWidget {
   final String label;
   final String hintText;
   final bool enabled;
+  final bool isMobile;
 
   const _EditTextField({
     Key? key,
@@ -1176,6 +1273,7 @@ class _EditTextField extends StatelessWidget {
     required this.label,
     required this.hintText,
     this.enabled = true,
+    this.isMobile = false,
   }) : super(key: key);
 
   @override
@@ -1185,8 +1283,8 @@ class _EditTextField extends StatelessWidget {
       children: [
         Text(
           label,
-          style: const TextStyle(
-            fontSize: 14,
+          style: TextStyle(
+            fontSize: isMobile ? 14 : 14,
             fontWeight: FontWeight.w500,
             color: AppColors.textPrimary,
           ),
@@ -1194,27 +1292,29 @@ class _EditTextField extends StatelessWidget {
         const SizedBox(height: 8),
         Container(
           decoration: BoxDecoration(
+            color: enabled ? Colors.white : Colors.grey[100],
             borderRadius: BorderRadius.circular(12),
-            boxShadow: const [
-              BoxShadow(
-                color: AppColors.shadowLight,
-                offset: Offset(0, 2),
-                blurRadius: 8,
-                spreadRadius: -2,
-              ),
-            ],
+            border: Border.all(
+              color: AppColors.cardBorder,
+              width: 1,
+            ),
+            boxShadow: isMobile
+                ? []
+                : const [
+                    BoxShadow(
+                      color: AppColors.shadowLight,
+                      offset: Offset(0, 2),
+                      blurRadius: 8,
+                      spreadRadius: -2,
+                    ),
+                  ],
           ),
           child: TextFormField(
             controller: controller,
             enabled: enabled,
             decoration: InputDecoration(
               hintText: hintText,
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-                borderSide: BorderSide.none,
-              ),
-              filled: true,
-              fillColor: enabled ? Colors.white : Colors.grey[100],
+              border: InputBorder.none,
               contentPadding: const EdgeInsets.symmetric(
                 horizontal: 16,
                 vertical: 16,
@@ -1222,6 +1322,7 @@ class _EditTextField extends StatelessWidget {
             ),
             style: TextStyle(
               color: enabled ? AppColors.textPrimary : AppColors.textHint,
+              fontSize: 16,
             ),
           ),
         ),
