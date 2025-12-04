@@ -1,11 +1,11 @@
+import 'package:IT_Planner/screen/members_page.dart';
+import 'package:IT_Planner/screen/profile_page.dart';
+import 'package:IT_Planner/screen/task_page.dart';
 import 'package:flutter/material.dart';
-import 'package:your_app_name/screen/task_page.dart';
-import 'package:your_app_name/screen/members_page.dart';
 import 'screen/auth/login_screen.dart';
 import 'screen/auth/register_screen.dart';
 import 'screen/auth/verification_screen.dart';
 import 'screen/not_found_screen.dart';
-import 'package:your_app_name/screen/profile_page.dart';
 import 'screen/repository_page.dart';
 import 'dto/project/project_response.dart';
 
@@ -27,7 +27,7 @@ class MyApp extends StatelessWidget {
       onGenerateRoute: (settings) {
         switch (settings.name) {
           case '/':
-            return MaterialPageRoute(builder: (context) => const TasksPage());
+            return MaterialPageRoute(builder: (context) => const LoginScreen());
           case '/login':
             return MaterialPageRoute(builder: (context) => const LoginScreen());
           case '/register':

@@ -1,6 +1,6 @@
+import 'package:IT_Planner/dto/auth/register_request.dart';
+import 'package:IT_Planner/dto/auth/register_response.dart';
 import 'package:flutter/material.dart';
-import 'package:your_app_name/dto/auth/register_request.dart';
-import 'package:your_app_name/dto/auth/register_response.dart';
 import '../../service/auth_service.dart';
 import '../../theme/colors.dart';
 

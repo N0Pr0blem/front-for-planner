@@ -1,14 +1,14 @@
 import 'dart:convert';
+import 'package:IT_Planner/dto/auth/auth_request.dart';
+import 'package:IT_Planner/dto/auth/auth_response.dart';
+import 'package:IT_Planner/dto/auth/register_request.dart';
+import 'package:IT_Planner/dto/auth/register_response.dart';
+import 'package:IT_Planner/dto/auth/verify_request.dart';
+import 'package:IT_Planner/dto/auth/verify_response.dart';
 import 'package:http/http.dart' as http;
-import 'package:your_app_name/dto/auth/auth_request.dart';
-import 'package:your_app_name/dto/auth/auth_response.dart';
-import 'package:your_app_name/dto/auth/register_request.dart';
-import 'package:your_app_name/dto/auth/register_response.dart';
-import 'package:your_app_name/dto/auth/verify_request.dart';
-import 'package:your_app_name/dto/auth/verify_response.dart';
 
 class AuthService {
-  static const String baseUrl = 'http://localhost:8080';
+  static const String baseUrl = 'http://10.193.60.191:8080';
   
   Future<RegisterResponse> register(RegisterRequest request) async {
     final url = Uri.parse('$baseUrl/api/v1/auth/register');

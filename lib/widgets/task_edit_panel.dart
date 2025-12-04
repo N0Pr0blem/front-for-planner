@@ -1,5 +1,5 @@
+import 'package:IT_Planner/dto/task/trekking_response.dart';
 import 'package:flutter/material.dart';
-import 'package:your_app_name/dto/task/trekking_response.dart';
 import '../theme/colors.dart';
 import '../service/task_service.dart';
 import '../dto/task/task_detail_response.dart';

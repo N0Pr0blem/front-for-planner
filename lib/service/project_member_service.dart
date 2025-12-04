@@ -5,7 +5,7 @@ import '../dto/project/invite_member_request.dart';
 import '../utils/token_storage.dart';
 
 class ProjectMemberService {
-  static const String _baseUrl = 'http://localhost:8080/api/v1';
+  static const String _baseUrl = 'http://10.193.60.191:8080/api/v1';
 
   Future<List<ProjectMemberResponse>> getProjectMembers(int projectId) async {
     try {

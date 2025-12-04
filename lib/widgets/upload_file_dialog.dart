@@ -84,55 +84,52 @@ class _UploadFileDialogState extends State<UploadFileDialog>
   }
 
   Future<void> _uploadFile() async {
-    if (_selectedFile == null) return;
+  if (_selectedFile == null) return;
 
-    setState(() {
-      _isLoading = true;
-    });
+  setState(() {
+    _isLoading = true;
+  });
 
-    try {
-      if (_selectedFile!.bytes != null) {
-        // Для веб-версии
-        await RepositoryService().uploadFileBytes(
-          widget.projectId, 
-          _selectedFile!.bytes!, 
-          _selectedFile!.name
-        );
-      } else if (_selectedFile!.path != null) {
-        // Для мобильной версии
-        final file = File(_selectedFile!.path!);
-        await RepositoryService().uploadFile(widget.projectId, file);
-      } else {
-        throw Exception('Файл не содержит данных');
-      }
+  try {
+    // Теперь используем единый метод для всех платформ
+    if (_selectedFile!.bytes != null) {
+      // Метод работает для всех платформ - и веб, и мобильных
+      await RepositoryService().uploadFile(
+        widget.projectId, 
+        _selectedFile!.bytes!, 
+        _selectedFile!.name
+      );
+    } else {
+      throw Exception('Файл не содержит данных');
+    }
 
-      if (mounted) {
-        Navigator.of(context).pop();
-        widget.onFileUploaded();
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Файл "${_selectedFile!.name}" успешно загружен'),
-            backgroundColor: Colors.green,
-          ),
-        );
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Ошибка загрузки файла: $e'),
-            backgroundColor: Colors.red,
-          ),
-        );
-      }
-    } finally {
-      if (mounted) {
-        setState(() {
-          _isLoading = false;
-        });
-      }
+    if (mounted) {
+      Navigator.of(context).pop();
+      widget.onFileUploaded();
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Файл "${_selectedFile!.name}" успешно загружен'),
+          backgroundColor: Colors.green,
+        ),
+      );
+    }
+  } catch (e) {
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Ошибка загрузки файла: $e'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  } finally {
+    if (mounted) {
+      setState(() {
+        _isLoading = false;
+      });
     }
   }
+}
 
   void _closeDialog() {
     _animationController.reverse().then((_) {

@@ -4,7 +4,7 @@ import '../dto/project/project_response.dart';
 import '../utils/token_storage.dart';
 
 class ProjectService {
-  static const String baseUrl = 'http://localhost:8080';
+  static const String baseUrl = 'http://10.193.60.191:8080';
 
   Future<List<ProjectResponse>> getProjects() async {
     final token = await TokenStorage.getToken();

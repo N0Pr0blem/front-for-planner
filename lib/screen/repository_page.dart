@@ -1,5 +1,5 @@
+import 'package:IT_Planner/widgets/mobile_bottom_nav_bar.dart';
 import 'package:flutter/material.dart';
-import 'package:your_app_name/widgets/mobile_bottom_nav_bar.dart';
 import '../dto/project/project_response.dart';
 import '../dto/repository/repository_file_response.dart';
 import '../service/repository_service.dart';

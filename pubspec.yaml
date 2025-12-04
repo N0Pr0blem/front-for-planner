@@ -1,4 +1,4 @@
-name: your_app_name
+name: IT_Planner
 description: A new Flutter project.
 
 publish_to: 'none'
@@ -11,13 +11,16 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
-  http: ^1.1.0
-  shared_preferences: ^2.3.0
+  http: ^1.2.1  # Обновите до последней
+  shared_preferences: ^2.2.2
+  permission_handler: ^11.3.1  # Обновите!
   json_annotation: ^4.8.1
-  image_picker: ^1.0.4
-  file_picker: ^5.5.0
+  image_picker: ^1.0.6  # Обновите!
+  file_picker: ^6.1.1  # Обновите!
   path_provider: ^2.1.1
-
+  connectivity_plus: ^5.0.1
+  flutter_dotenv: ^5.1.0
+  
 dev_dependencies:
   flutter_test:
     sdk: flutter
@@ -27,6 +30,4 @@ dev_dependencies:
 flutter:
   uses-material-design: true
   assets:
-    - assets/images/ 
-
-       
+    - assets/images/

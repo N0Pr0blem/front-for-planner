@@ -1,12 +1,12 @@
 import 'dart:convert';
+import 'dart:typed_data';
 import 'package:http/http.dart' as http;
 import '../dto/user/user_response.dart';
 import '../utils/token_storage.dart';
 import 'package:http_parser/http_parser.dart';
-import 'dart:typed_data';
 
 class MainService {
-  static const String baseUrl = 'http://localhost:8080';
+  static const String baseUrl = 'http://10.193.60.191:8080';
 
   Future<UserResponse> getProfile() async {
     final token = await TokenStorage.getToken();
@@ -100,7 +100,6 @@ class MainService {
     }
   }
 
-  // Вспомогательный метод для определения типа контента
   MediaType? _getMediaType(String mimeType) {
     switch (mimeType.toLowerCase()) {
       case 'jpg':
@@ -113,7 +112,7 @@ class MainService {
       case 'bmp':
         return MediaType('image', 'bmp');
       default:
-        return MediaType('image', 'jpeg'); // fallback
+        return MediaType('image', 'jpeg');
     }
   }
 }

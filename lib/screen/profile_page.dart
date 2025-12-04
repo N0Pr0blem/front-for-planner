@@ -1,5 +1,5 @@
+import 'package:IT_Planner/widgets/mobile_bottom_nav_bar.dart';
 import 'package:flutter/material.dart';
-import 'package:your_app_name/widgets/mobile_bottom_nav_bar.dart';
 import '../dto/user/user_response.dart';
 import '../dto/project/project_response.dart';
 import '../dto/task/task_response.dart';

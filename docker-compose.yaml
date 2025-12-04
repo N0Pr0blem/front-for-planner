@@ -1,0 +1,10 @@
+version: '3.8'
+
+services:
+  flutter-build:
+    build: .
+    volumes:
+      - ./output:/output  # Для сохранения APK
+    environment:
+      - FLUTTER_CHANNEL=stable
+    container_name: flutter_builder
