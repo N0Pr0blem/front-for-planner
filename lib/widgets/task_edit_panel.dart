@@ -1,4 +1,4 @@
-import 'package:IT_Planner/dto/task/trekking_response.dart';
+import 'package:it_planner/dto/task/trekking_response.dart';
 import 'package:flutter/material.dart';
 import '../theme/colors.dart';
 import '../service/task_service.dart';

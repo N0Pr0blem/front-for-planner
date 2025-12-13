@@ -1,4 +1,4 @@
-import 'package:IT_Planner/widgets/mobile_bottom_nav_bar.dart';
+import 'package:it_planner/widgets/mobile_bottom_nav_bar.dart';
 import 'package:flutter/material.dart';
 import '../dto/user/user_response.dart';
 import '../dto/project/project_response.dart';

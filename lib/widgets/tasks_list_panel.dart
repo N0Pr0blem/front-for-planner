@@ -1,4 +1,4 @@
-import 'package:IT_Planner/dto/task/task_detail_response.dart';
+import 'package:it_planner/dto/task/task_detail_response.dart';
 import 'package:flutter/material.dart';
 import '../dto/task/task_response.dart';
 import '../theme/colors.dart';

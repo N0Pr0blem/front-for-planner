@@ -1,5 +1,5 @@
-import 'package:IT_Planner/dto/auth/verify_request.dart';
-import 'package:IT_Planner/dto/auth/verify_response.dart';
+import 'package:it_planner/dto/auth/verify_request.dart';
+import 'package:it_planner/dto/auth/verify_response.dart';
 import 'package:flutter/material.dart';
 import '../../service/auth_service.dart';
 import '../../theme/colors.dart';

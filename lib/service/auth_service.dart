@@ -1,10 +1,10 @@
 import 'dart:convert';
-import 'package:IT_Planner/dto/auth/auth_request.dart';
-import 'package:IT_Planner/dto/auth/auth_response.dart';
-import 'package:IT_Planner/dto/auth/register_request.dart';
-import 'package:IT_Planner/dto/auth/register_response.dart';
-import 'package:IT_Planner/dto/auth/verify_request.dart';
-import 'package:IT_Planner/dto/auth/verify_response.dart';
+import 'package:it_planner/dto/auth/auth_request.dart';
+import 'package:it_planner/dto/auth/auth_response.dart';
+import 'package:it_planner/dto/auth/register_request.dart';
+import 'package:it_planner/dto/auth/register_response.dart';
+import 'package:it_planner/dto/auth/verify_request.dart';
+import 'package:it_planner/dto/auth/verify_response.dart';
 import 'package:http/http.dart' as http;
 
 class AuthService {

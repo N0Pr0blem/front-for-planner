@@ -1,6 +1,6 @@
-import 'package:IT_Planner/screen/members_page.dart';
-import 'package:IT_Planner/screen/profile_page.dart';
-import 'package:IT_Planner/screen/task_page.dart';
+import 'package:it_planner/screen/members_page.dart';
+import 'package:it_planner/screen/profile_page.dart';
+import 'package:it_planner/screen/task_page.dart';
 import 'package:flutter/material.dart';
 import 'screen/auth/login_screen.dart';
 import 'screen/auth/register_screen.dart';

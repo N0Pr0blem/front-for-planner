@@ -1,5 +1,5 @@
 
-import 'package:IT_Planner/dto/task/task_detail_response.dart';
+import 'package:it_planner/dto/task/task_detail_response.dart';
 
 class TaskResponse {
   final int id;

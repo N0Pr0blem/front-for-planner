@@ -1,4 +1,4 @@
-import 'package:IT_Planner/screen/task_tracking_screen.dart';
+import 'package:it_planner/screen/task_tracking_screen.dart';
 import 'package:flutter/material.dart';
 import '../theme/colors.dart';
 import '../service/task_service.dart';

@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
+import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'package:path_provider/path_provider.dart';
 import 'package:permission_handler/permission_handler.dart';
@@ -11,7 +12,7 @@ import '../dto/task/task_update_request.dart';
 import '../dto/task/task_create_request.dart';
 import '../utils/token_storage.dart';
 import '../dto/task/task_file_response.dart';
-import 'dart:html' as html; // Добавляем этот импорт для веб-версии
+import 'file_download_service.dart';
 
 class TaskService {
   static const String baseUrl = 'http://10.193.60.191:8080';
@@ -106,7 +107,6 @@ class TaskService {
     }
   }
 
-  // В класс TaskService добавьте:
   static Future<void> deleteTrekking(int trekkingId) async {
     final token = await TokenStorage.getToken();
     if (token == null) {
@@ -260,6 +260,10 @@ class TaskService {
 
   static Future<List<TaskResponse>> getMyTasks() async {
     final token = await TokenStorage.getToken();
+    if (token == null) {
+      throw Exception('No auth token');
+    }
+    
     final response = await http.get(
       Uri.parse('$baseUrl/api/v1/task/my'),
       headers: {
@@ -319,7 +323,7 @@ class TaskService {
     );
 
     if (response.statusCode == 200) {
-      await _saveTaskFile(response.bodyBytes, fileName);
+      await FileDownloadService.downloadFile(response.bodyBytes, fileName);
     } else {
       throw Exception('Failed to download task file: ${response.statusCode}');
     }
@@ -351,71 +355,6 @@ class TaskService {
     if (response.statusCode != 200 && response.statusCode != 201) {
       throw Exception('Failed to upload task file: ${response.statusCode}');
     }
-  }
-
-
-  static Future<void> _saveTaskFile(List<int> bytes, String fileName) async {
-    if (_isWeb()) {
-      _downloadForWeb(bytes, fileName);
-    } else {
-      await _saveFileMobile(bytes, fileName);
-    }
-  }
-
-  static Future<void> _saveFileMobile(List<int> bytes, String fileName) async {
-    try {
-      // Запрашиваем разрешение на запись в хранилище (для Android)
-      if (Platform.isAndroid) {
-        final status = await Permission.storage.request();
-        if (!status.isGranted) {
-          throw Exception('Storage permission denied');
-        }
-      }
-
-      // Получаем директорию для сохранения файлов
-      final directory = await _getDownloadDirectory();
-      
-      // Создаем файл
-      final file = File('${directory.path}/$fileName');
-      
-      // Записываем байты в файл
-      await file.writeAsBytes(bytes);
-      
-      print('Task file saved: ${file.path}');
-      
-      // Можно добавить уведомление о сохранении
-      // Например, через SnackBar в UI
-      
-    } catch (e) {
-      print('Error saving task file: $e');
-      rethrow;
-    }
-  }
-
-  static Future<Directory> _getDownloadDirectory() async {
-    if (Platform.isAndroid) {
-      // Для Android используем Downloads директорию
-      return Directory('/storage/emulated/0/Download');
-    } else if (Platform.isIOS) {
-      // Для iOS используем Documents директорию
-      return await getApplicationDocumentsDirectory();
-    } else {
-      // Для других платформ используем временную директорию
-      return await getTemporaryDirectory();
-    }
-  }
-
-  static bool _isWeb() {
-    return identical(0, 0.0);
-  }
-
-  static void _downloadForWeb(List<int> bytes, String fileName) {
-    final blob = html.Blob([bytes]);
-    final url = html.Url.createObjectUrlFromBlob(blob);
-    final anchor = html.AnchorElement(href: url)
-      ..setAttribute('download', fileName)
-      ..click();
-    html.Url.revokeObjectUrl(url);
   }
 
   static Future<void> deleteTaskFile(int taskId, int fileId) async {
