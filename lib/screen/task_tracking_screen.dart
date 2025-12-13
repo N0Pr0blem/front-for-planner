@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:it_planner/widgets/assign_task_dialog.dart';
 import '../dto/task/task_detail_response.dart';
 import '../dto/task/trekking_response.dart';
 import '../theme/colors.dart';
@@ -9,12 +10,14 @@ class TaskTrackingScreen extends StatefulWidget {
   final TaskDetailResponse task;
   final TrekkingResponse? trekking;
   final int projectId;
+  final Function(TaskDetailResponse)? onTaskAssigned;
 
   const TaskTrackingScreen({
     Key? key,
     required this.task,
     this.trekking,
     required this.projectId,
+    this.onTaskAssigned,
   }) : super(key: key);
 
   @override
@@ -25,11 +28,39 @@ class _TaskTrackingScreenState extends State<TaskTrackingScreen> {
   bool _isLoading = false;
   int? _deletingTrekkingId;
   TrekkingResponse? _currentTrekking;
+  TaskDetailResponse? _currentTask;
 
   @override
   void initState() {
     super.initState();
     _currentTrekking = widget.trekking;
+    _currentTask = widget.task;
+  }
+
+  void _updateTask(TaskDetailResponse updatedTask) {
+    setState(() {
+      _currentTask = updatedTask;
+    });
+    
+    // Уведомляем родительский компонент
+    if (widget.onTaskAssigned != null) {
+      widget.onTaskAssigned!(updatedTask);
+    }
+  }
+
+  // Метод для показа диалога назначения
+  void _showAssignDialog() {
+    if (_currentTask == null) return;
+    
+    AssignTaskDialog.showMobileDialog(
+      context: context,
+      projectId: widget.projectId,
+      taskId: _currentTask!.id,
+      currentAssignedTo: _currentTask!.assignedTo,
+      onAssigned: (updatedTask) {
+        _updateTask(updatedTask);
+      },
+    );
   }
 
   Future<void> _refreshTrekking() async {
@@ -77,6 +108,8 @@ class _TaskTrackingScreenState extends State<TaskTrackingScreen> {
       },
     );
   }
+
+  
 
   void _showDeleteConfirmation(int trekkingId) {
     showDialog(
@@ -289,45 +322,64 @@ class _TaskTrackingScreenState extends State<TaskTrackingScreen> {
     );
   }
 
-  Widget _buildUsersSection() {
-    final assignedBy = widget.task.assignedBy;
-    final assignedTo = widget.task.assignedTo;
-    final isAssignedToEmpty = assignedTo.firstName.isEmpty ||
-        assignedTo.fullName == 'Не назначено';
+ Widget _buildUsersSection() {
+  final assignedBy = _currentTask?.assignedBy ?? widget.task.assignedBy;
+  final assignedTo = _currentTask?.assignedTo ?? widget.task.assignedTo;
+  final isAssignedToEmpty = assignedTo.firstName.isEmpty ||
+      assignedTo.fullName == 'Не назначено';
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          'Назначения',
-          style: TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.bold,
-            color: AppColors.textPrimary,
+  return Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(
+            'Назначения',
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+              color: AppColors.textPrimary,
+            ),
           ),
-        ),
-        const SizedBox(height: 16),
+          // Кнопка назначить
+          ElevatedButton.icon(
+            onPressed: _showAssignDialog,
+            icon: Icon(Icons.person_add, size: 16),
+            label: Text('Назначить'),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.primary,
+              foregroundColor: Colors.white,
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
+          ),
+        ],
+      ),
+      const SizedBox(height: 16),
 
-        // Кто создал задачу
-        _buildUserCard(
-          title: 'Создал задачу',
-          user: assignedBy,
-          icon: Icons.create,
-          color: Colors.blue,
-        ),
-        const SizedBox(height: 12),
+      // Кто создал задачу
+      _buildUserCard(
+        title: 'Создал задачу',
+        user: assignedBy,
+        icon: Icons.create,
+        color: Colors.blue,
+      ),
+      const SizedBox(height: 12),
 
-        // Кто назначен на задачу
-        _buildUserCard(
-          title: 'Ответственный',
-          user: assignedTo,
-          icon: Icons.person,
-          color: isAssignedToEmpty ? Colors.grey : Colors.green,
-          isEmpty: isAssignedToEmpty,
-        ),
-      ],
-    );
-  }
+      // Кто назначен на задачу
+      _buildUserCard(
+        title: 'Ответственный',
+        user: assignedTo,
+        icon: Icons.person,
+        color: isAssignedToEmpty ? Colors.grey : Colors.green,
+        isEmpty: isAssignedToEmpty,
+      ),
+    ],
+  );
+}
 
   Widget _buildUserCard({
     required String title,

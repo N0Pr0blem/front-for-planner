@@ -267,51 +267,7 @@ Widget _buildMobileProjectList() {
         ),
       ],
     ),
-    body: Padding(
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        children: [
-          // Поле поиска
-          Container(
-            height: 44,
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(12),
-              boxShadow: const [
-                BoxShadow(
-                  color: AppColors.shadowLight,
-                  offset: Offset(0, 2),
-                  blurRadius: 6,
-                  spreadRadius: -2,
-                ),
-              ],
-            ),
-            child: TextField(
-              controller: _searchController,
-              decoration: InputDecoration(
-                hintText: 'Поиск файлов...',
-                hintStyle: const TextStyle(color: AppColors.textHint),
-                border: InputBorder.none,
-                contentPadding: const EdgeInsets.symmetric(horizontal: 16),
-                prefixIcon: Icon(
-                  Icons.search,
-                  color: AppColors.textHint,
-                  size: 20,
-                ),
-              ),
-              style: const TextStyle(fontSize: 14),
-              onChanged: (value) {
-                // можно добавить фильтрацию
-              },
-            ),
-          ),
-          const SizedBox(height: 16),
-          Expanded(
-            child: _buildContent(),
-          ),
-        ],
-      ),
-    ),
+   
     bottomNavigationBar: MobileBottomNavBar(
       onTasksTap: _navigateToTasks,
       onMembersTap: _navigateToMembers,

@@ -65,7 +65,8 @@ class _TasksListPanelState extends State<TasksListPanel> {
 
   @override
   Widget build(BuildContext context) {
-    final isTaskSelected = widget.selectedTaskId != null && widget.selectedTaskId!.isNotEmpty;
+    final isTaskSelected =
+        widget.selectedTaskId != null && widget.selectedTaskId!.isNotEmpty;
 
     if (widget.isMobile) {
       return _buildMobileLayout(context, isTaskSelected);
@@ -163,31 +164,21 @@ class _TasksListPanelState extends State<TasksListPanel> {
                   ),
                 ),
                 // Если задача выбрана, показываем иконку вместо кнопки
-                isTaskSelected
-                    ? IconButton(
-                        onPressed: widget.onAddTask,
-                        icon: Icon(
-                          Icons.add,
-                          color: AppColors.primary,
-                          size: 24,
-                        ),
-                        tooltip: 'Добавить задачу',
-                        style: IconButton.styleFrom(
-                          backgroundColor: AppColors.primary.withOpacity(0.1),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                        ),
-                      )
-                    : ElevatedButton.icon(
-                        onPressed: widget.onAddTask,
-                        icon: const Icon(Icons.add, size: 16),
-                        label: const Text('Добавить'),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: AppColors.primary,
-                          foregroundColor: Colors.white,
-                        ),
-                      ),
+                IconButton(
+                  onPressed: widget.onAddTask,
+                  icon: Icon(
+                    Icons.add,
+                    color: AppColors.primary,
+                    size: 24,
+                  ),
+                  tooltip: 'Добавить задачу',
+                  style: IconButton.styleFrom(
+                    backgroundColor: AppColors.primary.withOpacity(0.1),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                ),
               ],
             ),
           ),
@@ -225,7 +216,8 @@ class _TasksListPanelState extends State<TasksListPanel> {
                       itemCount: widget.tasks.length,
                       itemBuilder: (context, index) {
                         final task = widget.tasks[index];
-                        final isSelected = widget.selectedTaskId == task.id.toString();
+                        final isSelected =
+                            widget.selectedTaskId == task.id.toString();
                         return _buildDesktopTaskCard(task, context, isSelected);
                       },
                     ),
@@ -238,7 +230,7 @@ class _TasksListPanelState extends State<TasksListPanel> {
 
   Widget _buildMobileTaskCard(TaskResponse task, BuildContext context) {
     final isSelected = widget.selectedTaskId == task.id.toString();
-    
+
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
       elevation: 2,
@@ -288,7 +280,8 @@ class _TasksListPanelState extends State<TasksListPanel> {
     );
   }
 
-  Widget _buildDesktopTaskCard(TaskResponse task, BuildContext context, bool isSelected) {
+  Widget _buildDesktopTaskCard(
+      TaskResponse task, BuildContext context, bool isSelected) {
     return Container(
       margin: const EdgeInsets.only(bottom: 8),
       decoration: BoxDecoration(
@@ -330,7 +323,9 @@ class _TasksListPanelState extends State<TasksListPanel> {
                         task.name,
                         style: TextStyle(
                           fontWeight: FontWeight.w600,
-                          color: isSelected ? AppColors.primary : AppColors.textPrimary,
+                          color: isSelected
+                              ? AppColors.primary
+                              : AppColors.textPrimary,
                         ),
                       ),
                       const SizedBox(height: 8),
@@ -365,72 +360,73 @@ class _TasksListPanelState extends State<TasksListPanel> {
       ),
     );
   }
+
   Widget _buildTaskStatusIcon(String status) {
-  IconData icon;
-  Color color;
+    IconData icon;
+    Color color;
 
-  switch (status.toUpperCase()) {
-    case 'TO_DO':
-      icon = Icons.radio_button_unchecked;
-      color = Colors.blueGrey;
-      break;
-    case 'IN_PROGRESS':
-      icon = Icons.autorenew;
-      color = Colors.blue;
-      break;
-    case 'REVIEW':
-      icon = Icons.visibility;
-      color = Colors.purple;
-      break;
-    case 'IN_TEST':
-      icon = Icons.bug_report;
-      color = Colors.orange;
-      break;
-    case 'DONE':
-      icon = Icons.check_circle;
-      color = Colors.green;
-      break;
-    default:
-      icon = Icons.help_outline;
-      color = Colors.grey;
+    switch (status.toUpperCase()) {
+      case 'TO_DO':
+        icon = Icons.radio_button_unchecked;
+        color = Colors.blueGrey;
+        break;
+      case 'IN_PROGRESS':
+        icon = Icons.autorenew;
+        color = Colors.blue;
+        break;
+      case 'REVIEW':
+        icon = Icons.visibility;
+        color = Colors.purple;
+        break;
+      case 'IN_TEST':
+        icon = Icons.bug_report;
+        color = Colors.orange;
+        break;
+      case 'DONE':
+        icon = Icons.check_circle;
+        color = Colors.green;
+        break;
+      default:
+        icon = Icons.help_outline;
+        color = Colors.grey;
+    }
+
+    return Icon(icon, color: color, size: 24);
   }
 
-  return Icon(icon, color: color, size: 24);
-}
-
-String _getStatusText(String status) {
-  switch (status.toUpperCase()) {
-    case 'TO_DO':
-      return 'Нужно сделать';
-    case 'IN_PROGRESS':
-      return 'В работе';
-    case 'REVIEW':
-      return 'На код ревью';
-    case 'IN_TEST':
-      return 'В тестировании';
-    case 'DONE':
-      return 'Готова';
-    default:
-      return status;
+  String _getStatusText(String status) {
+    switch (status.toUpperCase()) {
+      case 'TO_DO':
+        return 'Нужно сделать';
+      case 'IN_PROGRESS':
+        return 'В работе';
+      case 'REVIEW':
+        return 'На код ревью';
+      case 'IN_TEST':
+        return 'В тестировании';
+      case 'DONE':
+        return 'Готова';
+      default:
+        return status;
+    }
   }
-}
 
-Color _getStatusColor(String status) {
-  switch (status.toUpperCase()) {
-    case 'TO_DO':
-      return Colors.blueGrey;
-    case 'IN_PROGRESS':
-      return Colors.blue;
-    case 'REVIEW':
-      return Colors.purple;
-    case 'IN_TEST':
-      return Colors.orange;
-    case 'DONE':
-      return Colors.green;
-    default:
-      return AppColors.textHint;
+  Color _getStatusColor(String status) {
+    switch (status.toUpperCase()) {
+      case 'TO_DO':
+        return Colors.blueGrey;
+      case 'IN_PROGRESS':
+        return Colors.blue;
+      case 'REVIEW':
+        return Colors.purple;
+      case 'IN_TEST':
+        return Colors.orange;
+      case 'DONE':
+        return Colors.green;
+      default:
+        return AppColors.textHint;
+    }
   }
-}
 
   Widget _buildAssignedMobileView(TaskResponse task) {
     return Row(
@@ -516,6 +512,7 @@ Color _getStatusColor(String status) {
     );
   }
 }
+
 // Диалоговое окно подтверждения удаления (оставляем как было)
 class _DeleteTaskDialog extends StatefulWidget {
   final TaskResponse task;
@@ -651,7 +648,8 @@ class _DeleteTaskDialogState extends State<_DeleteTaskDialog>
                         ),
                       ),
                       IconButton(
-                        icon: Icon(Icons.close, color: AppColors.textHint, size: 20),
+                        icon: Icon(Icons.close,
+                            color: AppColors.textHint, size: 20),
                         onPressed: _closeDialog,
                         splashRadius: 20,
                         padding: EdgeInsets.zero,
@@ -698,7 +696,8 @@ class _DeleteTaskDialogState extends State<_DeleteTaskDialog>
                               borderRadius: BorderRadius.circular(12),
                               onTap: _closeDialog,
                               child: Container(
-                                padding: const EdgeInsets.symmetric(vertical: 14),
+                                padding:
+                                    const EdgeInsets.symmetric(vertical: 14),
                                 decoration: BoxDecoration(
                                   color: Colors.white,
                                   borderRadius: BorderRadius.circular(12),
@@ -738,7 +737,8 @@ class _DeleteTaskDialogState extends State<_DeleteTaskDialog>
                               borderRadius: BorderRadius.circular(12),
                               onTap: _isLoading ? null : _deleteTask,
                               child: Container(
-                                padding: const EdgeInsets.symmetric(vertical: 14),
+                                padding:
+                                    const EdgeInsets.symmetric(vertical: 14),
                                 decoration: BoxDecoration(
                                   color: Colors.red,
                                   borderRadius: BorderRadius.circular(12),
@@ -751,7 +751,8 @@ class _DeleteTaskDialogState extends State<_DeleteTaskDialog>
                                           child: CircularProgressIndicator(
                                             strokeWidth: 2,
                                             valueColor:
-                                                AlwaysStoppedAnimation<Color>(Colors.white),
+                                                AlwaysStoppedAnimation<Color>(
+                                                    Colors.white),
                                           ),
                                         )
                                       : const Text(

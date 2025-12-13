@@ -560,7 +560,7 @@ class __ProfileSectionState extends State<_ProfileSection> {
               if (!widget.isEditing)
                 _ActionButton(
                   icon: Icons.edit,
-                  label: 'Редактировать',
+                  label: '',
                   onTap: widget.onEditToggle,
                 ),
             ],

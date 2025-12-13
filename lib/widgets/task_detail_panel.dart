@@ -1,5 +1,6 @@
 import 'package:it_planner/screen/task_tracking_screen.dart';
 import 'package:flutter/material.dart';
+import 'package:it_planner/widgets/assign_task_dialog.dart';
 import '../theme/colors.dart';
 import '../service/task_service.dart';
 import '../dto/task/task_detail_response.dart';
@@ -15,6 +16,7 @@ class TaskDetailPanel extends StatefulWidget {
   final int projectId;
   final VoidCallback? onEdit;
   final bool isMobile;
+  final VoidCallback? onTaskAssigned;
 
   const TaskDetailPanel({
     Key? key,
@@ -26,6 +28,7 @@ class TaskDetailPanel extends StatefulWidget {
     this.trekking,
     required this.projectId,
     this.isMobile = false,
+    this.onTaskAssigned,
   }) : super(key: key);
 
   @override
@@ -114,56 +117,59 @@ class _TaskDetailPanelState extends State<TaskDetailPanel> {
   }
 
   Widget _buildMobileLayout(BuildContext context, TaskDetailResponse task) {
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _buildMobileStatusCard(task),
-          const SizedBox(height: 16),
+  return SingleChildScrollView(
+    padding: const EdgeInsets.all(16),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _buildMobileStatusCard(task),
+        const SizedBox(height: 16),
 
-          // Приоритет и объем — в одну строку
-          Row(
-            children: [
-              Expanded(
-                child: _buildMobileInfoCard(
-                  label: 'Приоритет',
-                  value: task.priority,
-                  color: _getPriorityColor(task.priority),
-                ),
+        // Приоритет и объем — в одну строку
+        Row(
+          children: [
+            Expanded(
+              child: _buildMobileInfoCard(
+                label: 'Приоритет',
+                value: task.priority,
+                color: _getPriorityColor(task.priority),
               ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: _buildMobileInfoCard(
-                  label: 'Объем',
-                  value: task.complexity,
-                  color: _getComplexityColor(task.complexity),
-                ),
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: _buildMobileInfoCard(
+                label: 'Объем',
+                value: task.complexity,
+                color: _getComplexityColor(task.complexity),
               ),
-            ],
-          ),
-          const SizedBox(height: 24),
+            ),
+          ],
+        ),
+        const SizedBox(height: 24),
 
-          // Ссылка на время и назначения
-          _buildTrackingInfoButton(context, widget.trekking?.hourSum ?? 0.0,
-              widget.trekking?.trekkingList.length ?? 0),
-          const SizedBox(height: 24),
+        // ТОЛЬКО ОДНА КНОПКА - Время и назначения (ведет на TaskTrackingScreen)
+        _buildTrackingInfoButton(
+          context, 
+          widget.trekking?.hourSum ?? 0.0,
+          widget.trekking?.trekkingList.length ?? 0,
+        ),
+        const SizedBox(height: 24),
 
-          // Описание — с прокруткой
-          _MobileDescriptionSection(
-            description: _taskDescription,
-            isLoading: _isDescriptionLoading,
-            onRefresh: _loadTaskDescription,
-          ),
-          const SizedBox(height: 24),
+        // Описание — с прокруткой
+        _MobileDescriptionSection(
+          description: _taskDescription,
+          isLoading: _isDescriptionLoading,
+          onRefresh: _loadTaskDescription,
+        ),
+        const SizedBox(height: 24),
 
-          // Документы
-          TaskDocumentsSection(taskId: task.id),
-          const SizedBox(height: 32),
-        ],
-      ),
-    );
-  }
+        // Документы
+        TaskDocumentsSection(taskId: task.id),
+        const SizedBox(height: 32),
+      ],
+    ),
+  );
+}
 
   Widget _buildMobileStatusCard(TaskDetailResponse task) {
     return Container(
@@ -489,12 +495,21 @@ class _TaskDetailPanelState extends State<TaskDetailPanel> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
+                          // СТРОКА С КНОПКАМИ - ДОБАВЛЯЕМ КНОПКУ НАЗНАЧИТЬ
                           Row(
                             children: [
                               _ActionButton(
                                 icon: Icons.edit,
                                 label: 'Редактировать',
                                 onTap: widget.onEdit ?? () {},
+                              ),
+                              const SizedBox(width: 12),
+                              _ActionButton(
+                                icon: Icons.person_add,
+                                label: 'Назначить',
+                                onTap: () {
+                                  _showDesktopAssignDialog(context, task);
+                                },
                               ),
                               const SizedBox(width: 12),
                               _TrackTimeButton(
@@ -661,6 +676,24 @@ class _TaskDetailPanelState extends State<TaskDetailPanel> {
       default:
         return status;
     }
+  }
+
+  void _showDesktopAssignDialog(BuildContext context, TaskDetailResponse task) {
+    AssignTaskDialog.showDesktopDialog(
+      context: context,
+      projectId: widget.projectId,
+      taskId: task.id,
+      currentAssignedTo: task.assignedTo,
+      onAssigned: (updatedTask) {
+        // Обновляем задачу в панели
+        widget.onTaskUpdated(updatedTask);
+
+        // Уведомляем родительский компонент об обновлении списка задач
+        if (widget.onTaskAssigned != null) {
+          widget.onTaskAssigned!();
+        }
+      },
+    );
   }
 }
 
@@ -1351,9 +1384,7 @@ class _TrekkingSectionState extends State<_TrekkingSection> {
     final parts = [
       entry.employeeFirstName,
       entry.employeeSecondName,
-    ]
-        .where((part) => part.isNotEmpty && part != 'null')
-        .toList();
+    ].where((part) => part.isNotEmpty && part != 'null').toList();
 
     return parts.isEmpty ? 'Неизвестный сотрудник' : parts.join(' ');
   }

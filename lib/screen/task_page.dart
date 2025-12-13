@@ -511,6 +511,7 @@ class _TasksPageState extends State<TasksPage> {
           projectId: _selectedProject!.id,
           onEdit: _startEditing,
           isMobile: true, // ←←← ЭТО ОБЯЗАТЕЛЬНО!
+          onTaskAssigned: _handleTaskAssigned,
         ),
       );
     } else {
@@ -635,6 +636,7 @@ class _TasksPageState extends State<TasksPage> {
         onTrekkingUpdated: _refreshTrekking,
         projectId: _selectedProject!.id,
         onEdit: _startEditing,
+        onTaskAssigned: _handleTaskAssigned,
       );
     } else {
       return Container(color: Colors.white);

@@ -398,4 +398,31 @@ class TaskService {
       throw Exception('Failed to delete task: ${response.statusCode}');
     }
   }
+
+  static Future<void> assignTask({
+  required int projectId,
+  required int taskId,
+  required int employeeId,
+}) async {
+  final token = await TokenStorage.getToken();
+  if (token == null) {
+    throw Exception('Token not found');
+  }
+
+  final url = Uri.parse('$baseUrl/api/v1/project/$projectId/task/$taskId/employee/$employeeId');
+  
+  final response = await http.patch(
+    url,
+    headers: {
+      'Authorization': 'Bearer $token',
+      'Content-Type': 'application/json',
+    },
+  );
+
+  if (response.statusCode != 200) {
+    throw Exception('Failed to assign task: ${response.statusCode} ${response.body}');
+  }
 }
+
+}
+
