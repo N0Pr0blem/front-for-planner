@@ -30,7 +30,7 @@ class NavigationPanel extends StatelessWidget {
           // Кнопка задач
           _NavigationButton(
             icon: Icons.task,
-            label: 'Tasks',
+            label: 'Задачи',
             isActive: isTasksActive,
             onTap: onTasksTap,
           ),
@@ -38,7 +38,7 @@ class NavigationPanel extends StatelessWidget {
           // Кнопка участников
           _NavigationButton(
             icon: Icons.people,
-            label: 'Members',
+            label: 'Участники',
             isActive: isMembersActive,
             onTap: onMembersTap,
           ),
@@ -46,7 +46,7 @@ class NavigationPanel extends StatelessWidget {
           // Кнопка репозитория
           _NavigationButton(
             icon: Icons.folder,
-            label: 'Repository',
+            label: 'Файлы',
             isActive: isRepositoryActive,
             onTap: onRepositoryTap,
           ),
@@ -56,7 +56,7 @@ class NavigationPanel extends StatelessWidget {
           // Кнопка настроек
           _NavigationButton(
             icon: Icons.settings,
-            label: 'Settings',
+            label: 'Настройки',
             isActive: false,
             onTap: () {},
           ),

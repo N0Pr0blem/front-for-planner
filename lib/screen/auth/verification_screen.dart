@@ -90,7 +90,7 @@ class _VerificationScreenState extends State<VerificationScreen> {
                     
                     // Заголовок
                     const Text(
-                      'Verify Your Email',
+                      'Подтвердите свой Email',
                       style: TextStyle(
                         fontSize: 24,
                         fontWeight: FontWeight.w900,
@@ -102,7 +102,7 @@ class _VerificationScreenState extends State<VerificationScreen> {
                     
                     // Описание
                     Text(
-                      'We sent a verification code to\n${widget.username}',
+                      'Мы послали код верификации на \n${widget.username}',
                       textAlign: TextAlign.center,
                       style: const TextStyle(
                         fontSize: 14,
@@ -228,7 +228,7 @@ class _VerificationScreenState extends State<VerificationScreen> {
                                     ),
                                   )
                                 : const Text(
-                                    'Verify Code',
+                                    'Подтвердить',
                                     textAlign: TextAlign.center,
                                     style: TextStyle(
                                       color: AppColors.textOnPrimary,
@@ -273,7 +273,7 @@ class _VerificationScreenState extends State<VerificationScreen> {
                                 ),
                                 SizedBox(width: 10),
                                 Text(
-                                  'Back to Registration',
+                                  'Вернуться к регистрации',
                                   style: TextStyle(
                                     color: AppColors.primary,
                                     fontSize: 16,
@@ -293,7 +293,7 @@ class _VerificationScreenState extends State<VerificationScreen> {
                     GestureDetector(
                       onTap: _resendCode,
                       child: const Text(
-                        "Didn't receive the code? Resend",
+                        "Не получили код? Отправить еще раз",
                         style: TextStyle(
                           color: AppColors.primaryLight,
                           decoration: TextDecoration.underline,
@@ -323,7 +323,7 @@ class _VerificationScreenState extends State<VerificationScreen> {
   
   if (code.length != 4) {
     setState(() {
-      _errorMessage = 'Please enter the complete 4-digit code';
+      _errorMessage = 'Пожалуйста введите 4-х значный код';
     });
     return;
   }
@@ -353,13 +353,13 @@ class _VerificationScreenState extends State<VerificationScreen> {
     } else {
       // Неизвестный статус
       setState(() {
-        _errorMessage = 'Verification failed: ${response.message}';
+        _errorMessage = 'Ошибка верификации: ${response.message}';
       });
     }
     
   } catch (e) {
     setState(() {
-      _errorMessage = e.toString().replaceAll('Exception: ', '');
+      _errorMessage = e.toString().replaceAll('Ошибка: ', '');
     });
   } finally {
     setState(() {
@@ -385,7 +385,7 @@ class _VerificationScreenState extends State<VerificationScreen> {
     // Здесь можно добавить запрос на повторную отправку кода
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
-        content: Text('Verification code has been resent to your email'),
+        content: Text('Код верификации был отправлен еще раз на ваш email'),
         backgroundColor: Colors.green,
       ),
     );

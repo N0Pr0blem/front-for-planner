@@ -37,7 +37,7 @@ class _LoginScreenState extends State<LoginScreen> {
       Navigator.pushReplacementNamed(context, '/register');
     },
     child: const Text(
-      "Don't have an account? Sign Up",
+      "Нет аккаунта? Зарегистрироваться",
       style: TextStyle(
         fontSize: 12,
         color: AppColors.primary,
@@ -135,7 +135,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     children: [
                       // Заголовок
                       const Text(
-                        'Sign In',
+                        'Вход',
                         style: TextStyle(
                           fontSize: 30,
                           fontWeight: FontWeight.w900,
@@ -182,7 +182,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                 style: const TextStyle(fontSize: 16),
                                 validator: (value) {
                                   if (value == null || value.isEmpty) {
-                                    return 'Please enter your email';
+                                    return 'Введите свой email';
                                   }
                                   return null;
                                 },
@@ -208,7 +208,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                 controller: _passwordController,
                                 obscureText: true,
                                 decoration: InputDecoration(
-                                  hintText: 'Password',
+                                  hintText: 'Пароль',
                                   hintStyle: const TextStyle(color: AppColors.textHint),
                                   filled: true,
                                   fillColor: Colors.white,
@@ -224,32 +224,12 @@ class _LoginScreenState extends State<LoginScreen> {
                                 style: const TextStyle(fontSize: 16),
                                 validator: (value) {
                                   if (value == null || value.isEmpty) {
-                                    return 'Please enter your password';
+                                    return 'Введите пароль';
                                   }
                                   return null;
                                 },
                               ),
-                            ),
-                            
-                            // Забыли пароль
-                            Container(
-                              alignment: Alignment.centerLeft,
-                              padding: const EdgeInsets.only(left: 10, top: 10),
-                              child: GestureDetector(
-                                onTap: () {
-                                  // Навигация на экран восстановления пароля
-                                },
-                                child: const Text(
-                                  'Forgot Password?',
-                                  style: TextStyle(
-                                    fontSize: 11,
-                                    color: AppColors.primary,
-                                    decoration: TextDecoration.underline,
-                                  ),
-                                ),
-                              ),
-                            ),
-                            
+                            ),                            
                             const SizedBox(height: 20),
                             
                             // Кнопка входа
@@ -288,7 +268,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                             ),
                                           )
                                         : const Text(
-                                            'Sign In',
+                                            'Войти',
                                             textAlign: TextAlign.center,
                                             style: TextStyle(
                                               color: AppColors.textOnPrimary,

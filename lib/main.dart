@@ -1,3 +1,4 @@
+import 'package:it_planner/screen/landing_page.dart';
 import 'package:it_planner/screen/members_page.dart';
 import 'package:it_planner/screen/profile_page.dart';
 import 'package:it_planner/screen/task_page.dart';
@@ -27,7 +28,7 @@ class MyApp extends StatelessWidget {
       onGenerateRoute: (settings) {
         switch (settings.name) {
           case '/':
-            return MaterialPageRoute(builder: (context) => const LoginScreen());
+            return MaterialPageRoute(builder: (context) => const LandingPage());
           case '/login':
             return MaterialPageRoute(builder: (context) => const LoginScreen());
           case '/register':

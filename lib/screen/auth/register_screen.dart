@@ -36,7 +36,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
           Navigator.pushReplacementNamed(context, '/login');
         },
         child: const Text(
-          "Already have an account? Sign In",
+          "Уже есть аккаунт? Войти",
           style: TextStyle(
             fontSize: 12,
             color: AppColors.primary,
@@ -135,7 +135,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     children: [
                       // Заголовок
                       const Text(
-                        'Create Account',
+                        'Создать аккаунт',
                         style: TextStyle(
                           fontSize: 30,
                           fontWeight: FontWeight.w900,
@@ -146,7 +146,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       const SizedBox(height: 10),
                       
                       const Text(
-                        'Fill in your details to get started',
+                        'Заполните информацию чтобы продолжить',
                         style: TextStyle(
                           fontSize: 14,
                           color: AppColors.textHint,
@@ -176,7 +176,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                               child: TextFormField(
                                 controller: _firstNameController,
                                 decoration: InputDecoration(
-                                  hintText: 'First Name',
+                                  hintText: 'Имя',
                                   hintStyle: const TextStyle(color: AppColors.textHint),
                                   filled: true,
                                   fillColor: Colors.white,
@@ -192,7 +192,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                 style: const TextStyle(fontSize: 16),
                                 validator: (value) {
                                   if (value == null || value.isEmpty) {
-                                    return 'Please enter your first name';
+                                    return 'Введите имя';
                                   }
                                   return null;
                                 },
@@ -233,10 +233,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                 style: const TextStyle(fontSize: 16),
                                 validator: (value) {
                                   if (value == null || value.isEmpty) {
-                                    return 'Please enter your email';
+                                    return 'Введите email';
                                   }
                                   if (!value.contains('@')) {
-                                    return 'Please enter a valid email';
+                                    return 'Пожалуйста введите валидный email';
                                   }
                                   return null;
                                 },
@@ -262,7 +262,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                 controller: _passwordController,
                                 obscureText: true,
                                 decoration: InputDecoration(
-                                  hintText: 'Password',
+                                  hintText: 'Пароль',
                                   hintStyle: const TextStyle(color: AppColors.textHint),
                                   filled: true,
                                   fillColor: Colors.white,
@@ -278,10 +278,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                 style: const TextStyle(fontSize: 16),
                                 validator: (value) {
                                   if (value == null || value.isEmpty) {
-                                    return 'Please enter a password';
+                                    return 'Введите пароль';
                                   }
                                   if (value.length < 6) {
-                                    return 'Password must be at least 6 characters';
+                                    return 'Пароль должен быть не меньше 6-ти символов';
                                   }
                                   return null;
                                 },
@@ -307,7 +307,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                 controller: _confirmPasswordController,
                                 obscureText: true,
                                 decoration: InputDecoration(
-                                  hintText: 'Confirm Password',
+                                  hintText: 'Подтвердить пароль',
                                   hintStyle: const TextStyle(color: AppColors.textHint),
                                   filled: true,
                                   fillColor: Colors.white,
@@ -323,10 +323,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                 style: const TextStyle(fontSize: 16),
                                 validator: (value) {
                                   if (value == null || value.isEmpty) {
-                                    return 'Please confirm your password';
+                                    return 'Повторите пароль';
                                   }
                                   if (value != _passwordController.text) {
-                                    return 'Passwords do not match';
+                                    return 'Пароли не совпадают';
                                   }
                                   return null;
                                 },
@@ -398,7 +398,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                             ),
                                           )
                                         : const Text(
-                                            'Create Account',
+                                            'Создать аккаунт',
                                             textAlign: TextAlign.center,
                                             style: TextStyle(
                                               color: AppColors.textOnPrimary,
@@ -448,7 +448,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
         
       } catch (e) {
         setState(() {
-          _errorMessage = e.toString().replaceAll('Exception: ', '');
+          _errorMessage = e.toString().replaceAll('Ошибка: ', '');
         });
       } finally {
         setState(() {
@@ -460,7 +460,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
   void _handleSuccess(RegisterResponse response) {
     setState(() {
-      _successMessage = 'Account created successfully! Check your email for verification code.';
+      _successMessage = 'Аккаунт успешно создан! Проверьте свою почту для ввода кода верификации.';
     });
     
     // Переход на страницу верификации через 2 секунды

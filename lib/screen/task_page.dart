@@ -572,7 +572,7 @@ class _TasksPageState extends State<TasksPage> {
                 else
                   const Expanded(
                     child: Center(
-                      child: Text('No project selected'),
+                      child: Text('Нет существующих проектов. Создайте чтобы начать работу'),
                     ),
                   ),
                 // 3. Детали задачи
