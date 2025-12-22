@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:it_planner/widgets/mobile_bottom_nav_bar.dart';
 import 'package:flutter/material.dart';
 import '../dto/user/user_response.dart';
@@ -425,39 +427,73 @@ class __ProfileSectionState extends State<_ProfileSection> {
   }
 
   Future<void> _pickImage() async {
-    try {
-      FilePickerResult? result = await FilePicker.platform.pickFiles(
-        type: FileType.custom,
-        allowedExtensions: ['jpg', 'jpeg', 'png', 'gif', 'bmp'],
-        allowMultiple: false,
-      );
+  try {
+    FilePickerResult? result = await FilePicker.platform.pickFiles(
+      type: FileType.custom,
+      allowedExtensions: ['jpg', 'jpeg', 'png', 'gif', 'bmp'],
+      allowMultiple: false,
+      // withData: true, // Не используем это, чтобы не нагружать память большими файлами
+    );
 
-      if (result != null && result.files.isNotEmpty) {
-        setState(() {
-          _pickedFile = result.files.first;
-          _imageBytes = _pickedFile!.bytes; // Сохраняем байты
-        });
-        print('Файл выбран: ${_pickedFile!.name}');
+    if (result != null && result.files.isNotEmpty) {
+      PlatformFile file = result.files.first;
+      print('Файл выбран: ${file.name}');
+      print('Путь к файлу: ${file.path}');
+      print('Байты в памяти: ${file.bytes != null ? "Есть" : "Нет"}');
 
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Изображение "${_pickedFile!.name}" выбрано успешно'),
-            backgroundColor: Colors.green,
-          ),
-        );
-      } else {
-        print('Пользователь отменил выбор файла');
+      // Ключевое исправление: если bytes нет, читаем файл с диска
+      Uint8List? imageBytes;
+      if (file.bytes != null) {
+        // Если файл уже в памяти (редкий случай для больших изображений на Android)
+        imageBytes = file.bytes;
+      } else if (file.path != null) {
+        // Читаем файл с диска по пути
+        try {
+          File imageFile = File(file.path!);
+          bool fileExists = await imageFile.exists();
+          print('Файл существует на диске: $fileExists');
+          
+          if (fileExists) {
+            imageBytes = await imageFile.readAsBytes();
+            print('Файл успешно прочитан с диска, размер: ${imageBytes.length} байт');
+          } else {
+            throw Exception('Файл не найден по указанному пути');
+          }
+        } catch (e) {
+          print('Ошибка чтения файла с диска: $e');
+          rethrow;
+        }
       }
-    } catch (e) {
-      print('Ошибка при выборе файла: $e');
+
+      // Проверяем, что у нас есть данные для работы
+      if (imageBytes == null || imageBytes.isEmpty) {
+        throw Exception('Не удалось получить данные файла для загрузки');
+      }
+
+      setState(() {
+        _pickedFile = file;
+        _imageBytes = imageBytes; // Теперь здесь точно будут байты изображения
+      });
+
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Ошибка при выборе файла: $e'),
-          backgroundColor: Colors.red,
+          content: Text('Изображение "${file.name}" выбрано успешно'),
+          backgroundColor: Colors.green,
         ),
       );
+    } else {
+      print('Пользователь отменил выбор файла');
     }
+  } catch (e) {
+    print('Ошибка при выборе файла: $e');
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('Ошибка при выборе файла: $e'),
+        backgroundColor: Colors.red,
+      ),
+    );
   }
+}
 
   Future<void> _saveProfile() async {
     try {

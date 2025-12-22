@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:io';
 import 'dart:typed_data';
 import 'package:http/http.dart' as http;
 import '../dto/user/user_response.dart';
@@ -44,9 +45,12 @@ class MainService {
     required String fileName,
     required String mimeType,
   }) async {
+    print('[SERVICE DEBUG] 1. Начало updateProfileWithImage');
     final token = await TokenStorage.getToken();
     final url = Uri.parse('${baseUrl}/api/v1/profile');
-    
+    print('[SERVICE DEBUG] 2. URL: $url');
+    print('[SERVICE DEBUG] 3. Размер файла для отправки: ${fileBytes.length} байт');
+
     var request = http.MultipartRequest('PATCH', url);
     
     // Добавляем текстовые поля
@@ -54,6 +58,7 @@ class MainService {
     request.fields['lastName'] = lastName;
     
     // Добавляем файл
+    print('[SERVICE DEBUG] 4. Создание MultipartFile...');
     request.files.add(http.MultipartFile.fromBytes(
       'file',
       fileBytes,
@@ -63,14 +68,33 @@ class MainService {
     
     // Добавляем заголовок авторизации
     request.headers['Authorization'] = 'Bearer $token';
-    
-    final response = await request.send();
-    final responseBody = await response.stream.bytesToString();
-    
-    if (response.statusCode == 200) {
-      return; // Успешно
-    } else {
-      throw Exception('Failed to update profile: ${response.statusCode} - $responseBody');
+    print('[SERVICE DEBUG] 5. Заголовки запроса: ${request.headers}');
+
+    print('[SERVICE DEBUG] 6. Отправка запроса...');
+    try {
+      final response = await request.send();
+      print('[SERVICE DEBUG] 7. Получен ответ, статус: ${response.statusCode}');
+      
+      final responseBody = await response.stream.bytesToString();
+      print('[SERVICE DEBUG] 8. Тело ответа: $responseBody');
+      
+      if (response.statusCode == 200) {
+        print('[SERVICE DEBUG] 9. УСПЕХ: Профиль обновлен');
+        return;
+      } else {
+        print('[SERVICE DEBUG] 10. ОШИБКА СЕРВЕРА: ${response.statusCode}');
+        throw Exception('Failed to update profile: ${response.statusCode} - $responseBody');
+      }
+    } on SocketException catch (e) {
+      print('[SERVICE DEBUG] СЕТЕВАЯ ОШИБКА: $e');
+      rethrow;
+    } on http.ClientException catch (e) {
+      print('[SERVICE DEBUG] HTTP КЛИЕНТ ОШИБКА: $e');
+      rethrow;
+    } catch (e, stackTrace) {
+      print('[SERVICE DEBUG] НЕИЗВЕСТНАЯ ОШИБКА: $e');
+      print('[SERVICE DEBUG] СТЭКТРЕЙС: $stackTrace');
+      rethrow;
     }
   }
 
