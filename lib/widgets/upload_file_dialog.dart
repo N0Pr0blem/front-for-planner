@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 import 'package:flutter/material.dart';
 import 'package:file_picker/file_picker.dart';
 import 'dart:io';
@@ -85,23 +87,59 @@ class _UploadFileDialogState extends State<UploadFileDialog>
 
   Future<void> _uploadFile() async {
   if (_selectedFile == null) return;
-
+  
   setState(() {
     _isLoading = true;
   });
 
   try {
-    // Теперь используем единый метод для всех платформ
-    if (_selectedFile!.bytes != null) {
-      // Метод работает для всех платформ - и веб, и мобильных
-      await RepositoryService().uploadFile(
-        widget.projectId, 
-        _selectedFile!.bytes!, 
-        _selectedFile!.name
-      );
-    } else {
-      throw Exception('Файл не содержит данных');
+    print('[UPLOAD DEBUG] Начинаем загрузку файла: ${_selectedFile!.name}');
+    
+    // КЛЮЧЕВОЙ БЛОК: Получаем байты файла
+    Uint8List bytesToUpload;
+    
+    // 1. Проверяем, есть ли байты сразу в памяти (веб и некоторые случаи на мобильных)
+    if (_selectedFile!.bytes != null && _selectedFile!.bytes!.isNotEmpty) {
+      bytesToUpload = _selectedFile!.bytes!;
+      print('[UPLOAD DEBUG] Используем байты из памяти, размер: ${bytesToUpload.length}');
+    } 
+    // 2. Если байтов нет (Android 14), но есть путь - читаем с диска
+    else if (_selectedFile!.path != null) {
+      print('[UPLOAD DEBUG] Байтов нет. Читаем файл с диска: ${_selectedFile!.path}');
+      try {
+        File diskFile = File(_selectedFile!.path!);
+        bool exists = await diskFile.exists();
+        
+        if (exists) {
+          bytesToUpload = await diskFile.readAsBytes();
+          print('[UPLOAD DEBUG] Файл прочитан с диска, размер: ${bytesToUpload.length} байт');
+        } else {
+          throw Exception('Файл не найден на диске по указанному пути');
+        }
+      } catch (e) {
+        print('[UPLOAD DEBUG] Ошибка чтения файла с диска: $e');
+        rethrow;
+      }
+    } 
+    // 3. Если ничего нет - это ошибка конфигурации
+    else {
+      throw Exception('Не удалось получить данные файла: нет ни байтов, ни пути к файлу');
     }
+
+    // ВАЖНО: Проверяем, что байты не пустые перед отправкой
+    if (bytesToUpload.isEmpty) {
+      throw Exception('Файл не содержит данных (0 байт) после чтения');
+    }
+
+    // 3. Вызываем сервис с гарантированно непустыми байтами
+    print('[UPLOAD DEBUG] Вызываем RepositoryService.uploadFile...');
+    await RepositoryService().uploadFile(
+      widget.projectId,
+      bytesToUpload, // Теперь здесь точно есть данные
+      _selectedFile!.name,
+    );
+    
+    print('[UPLOAD DEBUG] Файл успешно отправлен на сервер!');
 
     if (mounted) {
       Navigator.of(context).pop();
@@ -114,6 +152,9 @@ class _UploadFileDialogState extends State<UploadFileDialog>
       );
     }
   } catch (e) {
+    print('[UPLOAD DEBUG] КРИТИЧЕСКАЯ ОШИБКА ЗАГРУЗКИ: $e');
+    print('[UPLOAD DEBUG] Тип ошибки: ${e.runtimeType}');
+    
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(

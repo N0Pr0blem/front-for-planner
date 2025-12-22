@@ -1,3 +1,6 @@
+import 'dart:io';
+import 'dart:typed_data';
+
 import 'package:flutter/material.dart';
 import 'package:file_picker/file_picker.dart';
 import '../theme/colors.dart';
@@ -79,42 +82,74 @@ class _TaskDocumentsSectionState extends State<TaskDocumentsSection> {
   }
 
   Future<void> _uploadFile() async {
-    try {
-      FilePickerResult? result = await FilePicker.platform.pickFiles();
+  try {
+    FilePickerResult? result = await FilePicker.platform.pickFiles();
+    
+    if (result != null && result.files.isNotEmpty) {
+      final file = result.files.first;
+      print('[TASK UPLOAD] Файл выбран: ${file.name}, путь: ${file.path}, байты: ${file.bytes != null ? "есть" : "нет"}');
       
-      if (result != null && result.files.isNotEmpty) {
-        final file = result.files.first;
-        
-        if (file.bytes != null) {
-          setState(() {
-            _isLoading = true;
-          });
-
-          await TaskService.uploadTaskFile(widget.taskId, file.bytes!, file.name);
-          await _loadTaskFiles(); // Перезагружаем список файлов
+      Uint8List fileBytes;
+      
+      // 1. Проверяем байты в памяти (веб, некоторые мобильные случаи)
+      if (file.bytes != null && file.bytes!.isNotEmpty) {
+        fileBytes = file.bytes!;
+        print('[TASK UPLOAD] Используем байты из памяти');
+      } 
+      // 2. Если байтов нет, но есть путь - читаем с диска (Android 14)
+      else if (file.path != null) {
+        print('[TASK UPLOAD] Читаем файл с диска: ${file.path}');
+        try {
+          File diskFile = File(file.path!);
+          bool exists = await diskFile.exists();
           
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('Файл "${file.name}" успешно загружен'),
-              backgroundColor: Colors.green,
-            ),
-          );
-        } else {
-          throw Exception('Не удалось получить файл');
+          if (exists) {
+            fileBytes = await diskFile.readAsBytes();
+            print('[TASK UPLOAD] Файл прочитан, размер: ${fileBytes.length} байт');
+          } else {
+            throw Exception('Файл не найден на диске');
+          }
+        } catch (e) {
+          print('[TASK UPLOAD] Ошибка чтения файла: $e');
+          rethrow;
         }
+      } 
+      // 3. Если ничего нет - ошибка
+      else {
+        throw Exception('Не удалось получить данные файла');
       }
-    } catch (e) {
+      
+      // Загружаем
+      setState(() {
+        _isLoading = true;
+      });
+
+      await TaskService.uploadTaskFile(widget.taskId, fileBytes, file.name);
+      await _loadTaskFiles(); // Перезагружаем список файлов
+      
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Ошибка загрузки файла: $e')),
+        SnackBar(
+          content: Text('Файл "${file.name}" успешно загрузки'),
+          backgroundColor: Colors.green,
+        ),
       );
-    } finally {
-      if (mounted) {
-        setState(() {
-          _isLoading = false;
-        });
-      }
+    }
+  } catch (e) {
+    print('[TASK UPLOAD] Ошибка загрузки: $e');
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('Ошибка загрузки файла: $e'),
+        backgroundColor: Colors.red,
+      ),
+    );
+  } finally {
+    if (mounted) {
+      setState(() {
+        _isLoading = false;
+      });
     }
   }
+}
 
   void _showDeleteDialog(TaskFileResponse file) {
     showDialog(

@@ -51,7 +51,7 @@ class _RepositoryPageState extends State<RepositoryPage> {
         });
       }
     } catch (e) {
-      print('Ошибка загрузки проектов: $e');
+      print('Создайте первый проект чтобы начать работу');
       setState(() {
         _isLoading = false;
       });

@@ -66,7 +66,7 @@ class _MembersPageState extends State<MembersPage> {
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Ошибка загрузки проектов: $e'),
+          content: Text('Создайте первый проект чтобы начать работу'),
         ),
       );
     }

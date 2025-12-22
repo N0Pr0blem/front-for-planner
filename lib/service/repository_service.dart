@@ -75,10 +75,13 @@ class RepositoryService {
     var request = http.MultipartRequest('POST', url);
     request.headers['Authorization'] = 'Bearer $token';
     
+    Uint8List bytesToUpload = bytes;
+    print('[DEBUG Repo] Получены байты. Длина: ${bytes.length}');
+
     // Создаем multipart file из bytes
     final multipartFile = http.MultipartFile.fromBytes(
       'file',
-      bytes,
+      bytesToUpload,
       filename: fileName,
     );
     

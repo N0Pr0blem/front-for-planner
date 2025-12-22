@@ -113,7 +113,7 @@ class _TasksPageState extends State<TasksPage> {
       _loadTasks(selected.id);
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Ошибка загрузки проектов: $e')),
+        SnackBar(content: Text('Создайте первый проект чтобы начать работу')),
       );
     }
   }
