@@ -306,7 +306,7 @@ class _TaskEditPanelState extends State<TaskEditPanel>
             ),
             const SizedBox(height: 24),
 
-            TaskDocumentsSection(taskId: widget.task.id),
+            TaskDocumentsSection(storageId: widget.task.storageId),
             const SizedBox(height: 32),
 
             Row(
@@ -709,7 +709,7 @@ Widget _buildMobileComplexitySelector() {
                             const SizedBox(height: 24),
 
                             // Документы
-                            TaskDocumentsSection(taskId: widget.task.id),
+                            TaskDocumentsSection(storageId: widget.task.storageId),
 
                             // Трекинг
                             if (widget.trekking != null &&

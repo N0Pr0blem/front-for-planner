@@ -8,7 +8,7 @@ import 'package:it_planner/dto/auth/verify_response.dart';
 import 'package:http/http.dart' as http;
 
 class AuthService {
-  static const String baseUrl = 'http://10.193.60.191:8080';
+  static const String baseUrl = 'http://192.168.0.103:8080';
   
   Future<RegisterResponse> register(RegisterRequest request) async {
     final url = Uri.parse('$baseUrl/api/v1/auth/register');

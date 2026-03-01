@@ -4,13 +4,13 @@ import '../theme/colors.dart';
 import '../service/repository_service.dart';
 
 class DeleteFileDialog extends StatefulWidget {
-  final int projectId;
+  final int storageId;
   final RepositoryFileResponse file;
   final VoidCallback onFileDeleted;
 
   const DeleteFileDialog({
     Key? key,
-    required this.projectId,
+    required this.storageId,
     required this.file,
     required this.onFileDeleted,
   }) : super(key: key);
@@ -66,7 +66,7 @@ class _DeleteFileDialogState extends State<DeleteFileDialog>
     });
 
     try {
-      await RepositoryService().deleteFile(widget.projectId, widget.file.id);
+      await RepositoryService().deleteFile(widget.storageId, widget.file.id);
 
       if (mounted) {
         Navigator.of(context).pop();

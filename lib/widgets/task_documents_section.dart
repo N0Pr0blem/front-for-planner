@@ -8,11 +8,11 @@ import '../service/task_service.dart';
 import '../dto/task/task_file_response.dart';
 
 class TaskDocumentsSection extends StatefulWidget {
-  final int taskId;
+  final int storageId;
 
   const TaskDocumentsSection({
     Key? key,
-    required this.taskId,
+    required this.storageId,
   }) : super(key: key);
 
   @override
@@ -34,13 +34,13 @@ class _TaskDocumentsSectionState extends State<TaskDocumentsSection> {
     super.didUpdateWidget(oldWidget);
     
     // Если taskId изменился, перезагружаем файлы
-    if (oldWidget.taskId != widget.taskId) {
+    if (oldWidget.storageId != widget.storageId) {
       _loadTaskFiles();
     }
   }
 
   Future<void> _loadTaskFiles() async {
-    if (widget.taskId == 0) return; // Не загружаем для taskId = 0
+    if (widget.storageId == 0) return; // Не загружаем для taskId = 0
 
     setState(() {
       _isLoading = true;
@@ -48,12 +48,12 @@ class _TaskDocumentsSectionState extends State<TaskDocumentsSection> {
     });
 
     try {
-      final files = await TaskService.getTaskFiles(widget.taskId);
+      final files = await TaskService.getTaskFiles(widget.storageId);
       setState(() {
         _taskFiles = files;
       });
     } catch (e) {
-      print('Ошибка загрузки файлов для задачи ${widget.taskId}: $e');
+      print('Ошибка загрузки файлов для задачи ${widget.storageId}: $e');
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Ошибка загрузки файлов: $e')),
       );
@@ -66,7 +66,7 @@ class _TaskDocumentsSectionState extends State<TaskDocumentsSection> {
 
   Future<void> _downloadFile(TaskFileResponse file) async {
     try {
-      await TaskService.downloadTaskFile(widget.taskId, file.id, file.name);
+      await TaskService.downloadTaskFile(widget.storageId, file.id, file.name);
       
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -124,7 +124,7 @@ class _TaskDocumentsSectionState extends State<TaskDocumentsSection> {
         _isLoading = true;
       });
 
-      await TaskService.uploadTaskFile(widget.taskId, fileBytes, file.name);
+      await TaskService.uploadTaskFile(widget.storageId, fileBytes, file.name);
       await _loadTaskFiles(); // Перезагружаем список файлов
       
       ScaffoldMessenger.of(context).showSnackBar(
@@ -156,7 +156,7 @@ class _TaskDocumentsSectionState extends State<TaskDocumentsSection> {
       context: context,
       builder: (BuildContext context) {
         return _DeleteTaskFileDialog(
-          taskId: widget.taskId,
+          taskId: widget.storageId,
           file: file,
           onFileDeleted: _loadTaskFiles,
         );

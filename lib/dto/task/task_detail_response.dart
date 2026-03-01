@@ -11,6 +11,7 @@ class TaskDetailResponse {
   final Assignee assignedBy;
   final Assignee assignedTo;
   final int projectId;
+  final int storageId;
 
   TaskDetailResponse(
       {required this.id,
@@ -24,6 +25,7 @@ class TaskDetailResponse {
       required this.creationDate,
       required this.assignedBy,
       required this.assignedTo,
+      required this.storageId,
       required this.projectId});
 
   factory TaskDetailResponse.fromJson(Map<String, dynamic> json) {
@@ -37,6 +39,7 @@ class TaskDetailResponse {
       description: (json['description'] as String?) ?? '',
       documents: _parseDocuments(json['documents']),
       projectId: (json['project_id'] as num?)?.toInt() ?? 0,
+      storageId: (json['storage_id'] as num?)?.toInt() ?? 0,
       creationDate:
           DateTime.tryParse(json['creation_date']?.toString() ?? '') ??
               DateTime.now(),
@@ -87,6 +90,7 @@ class TaskDetailResponse {
         lastName: null,
       ),
       projectId: projectId,
+      storageId:0
     );
   }
 }

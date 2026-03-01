@@ -7,12 +7,12 @@ import '../theme/colors.dart';
 import '../service/repository_service.dart';
 
 class UploadFileDialog extends StatefulWidget {
-  final int projectId;
+  final int storageId;
   final VoidCallback onFileUploaded;
 
   const UploadFileDialog({
     Key? key,
-    required this.projectId,
+    required this.storageId,
     required this.onFileUploaded,
   }) : super(key: key);
 
@@ -134,7 +134,7 @@ class _UploadFileDialogState extends State<UploadFileDialog>
     // 3. Вызываем сервис с гарантированно непустыми байтами
     print('[UPLOAD DEBUG] Вызываем RepositoryService.uploadFile...');
     await RepositoryService().uploadFile(
-      widget.projectId,
+      widget.storageId,
       bytesToUpload, // Теперь здесь точно есть данные
       _selectedFile!.name,
     );

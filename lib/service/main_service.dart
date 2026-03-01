@@ -7,7 +7,7 @@ import '../utils/token_storage.dart';
 import 'package:http_parser/http_parser.dart';
 
 class MainService {
-  static const String baseUrl = 'http://10.193.60.191:8080';
+  static const String baseUrl = 'http://192.168.0.103:8080';
 
   Future<UserResponse> getProfile() async {
     final token = await TokenStorage.getToken();

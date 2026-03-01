@@ -164,7 +164,7 @@ class _TaskDetailPanelState extends State<TaskDetailPanel> {
         const SizedBox(height: 24),
 
         // Документы
-        TaskDocumentsSection(taskId: task.id),
+        TaskDocumentsSection(storageId: task.storageId),
         const SizedBox(height: 32),
       ],
     ),
@@ -411,6 +411,7 @@ class _TaskDetailPanelState extends State<TaskDetailPanel> {
                           assignedBy: task.assignedBy,
                           assignedTo: task.assignedTo,
                           projectId: task.projectId,
+                          storageId: task.storageId,
                         );
                         widget.onTaskUpdated(updatedTask);
                       } catch (e) {
@@ -538,6 +539,7 @@ class _TaskDetailPanelState extends State<TaskDetailPanel> {
                                         assignedBy: task.assignedBy,
                                         assignedTo: task.assignedTo,
                                         projectId: task.projectId,
+                                        storageId: task.storageId,
                                       );
                                       widget.onTaskUpdated(updatedTask);
                                     } catch (e) {
@@ -576,7 +578,7 @@ class _TaskDetailPanelState extends State<TaskDetailPanel> {
                             onRefresh: _loadTaskDescription,
                           ),
                           const SizedBox(height: 24),
-                          TaskDocumentsSection(taskId: task.id),
+                          TaskDocumentsSection(storageId: task.storageId),
                           if (widget.trekking != null &&
                               widget.trekking!.trekkingList.isNotEmpty)
                             _TrekkingSection(

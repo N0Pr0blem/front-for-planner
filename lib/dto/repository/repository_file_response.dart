@@ -1,22 +1,25 @@
 class RepositoryFileResponse {
   final int id;
-  final int projectRepoId;
+  final int storageId;
   final String type;
   final String name;
+  final String creationDate;
 
   RepositoryFileResponse({
     required this.id,
-    required this.projectRepoId,
+    required this.storageId,
     required this.type,
     required this.name,
+    required this.creationDate
   });
 
   factory RepositoryFileResponse.fromJson(Map<String, dynamic> json) {
     return RepositoryFileResponse(
       id: json['id'] as int,
-      projectRepoId: json['projectRepoId'] as int,
-      type: json['type'] as String,
+      storageId: json['storage_id'] as int,
+      type: json['mime_type'] as String,
       name: json['name'] as String,
+      creationDate: json['creation_date'] as String
     );
   }
 

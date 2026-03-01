@@ -62,16 +62,16 @@ class _RepositoryPageState extends State<RepositoryPage> {
     setState(() {
       _selectedProject = project;
     });
-    _loadRepositoryFiles(project.id);
+    _loadRepositoryFiles(project.storageId);
   }
 
-  Future<void> _loadRepositoryFiles(int projectId) async {
+  Future<void> _loadRepositoryFiles(int storageId) async {
     setState(() {
       _isLoading = true;
     });
 
     try {
-      final files = await RepositoryService().getRepositoryFiles(projectId);
+      final files = await RepositoryService().getRepositoryFiles(storageId);
       setState(() {
         _files = files;
         _isLoading = false;
@@ -104,7 +104,7 @@ class _RepositoryPageState extends State<RepositoryPage> {
       context: context,
       builder: (BuildContext context) {
         return UploadFileDialog(
-          projectId: _selectedProject!.id,
+          storageId: _selectedProject!.storageId,
           onFileUploaded: _refreshFiles,
         );
       },
@@ -118,7 +118,7 @@ class _RepositoryPageState extends State<RepositoryPage> {
       context: context,
       builder: (BuildContext context) {
         return DeleteFileDialog(
-          projectId: _selectedProject!.id,
+          storageId: _selectedProject!.storageId,
           file: file,
           onFileDeleted: _refreshFiles,
         );
@@ -131,7 +131,7 @@ class _RepositoryPageState extends State<RepositoryPage> {
 
     try {
       await RepositoryService()
-          .downloadFile(_selectedProject!.id, file.id, file.name);
+          .downloadFile(_selectedProject!.storageId, file.id, file.name);
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Файл "${file.displayName}" скачан')),
       );

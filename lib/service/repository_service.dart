@@ -7,16 +7,16 @@ import '../utils/token_storage.dart';
 import 'file_download_service.dart';
 
 class RepositoryService {
-  static const String baseUrl = 'http://10.193.60.191:8080';
+  static const String baseUrl = 'http://192.168.0.103:8080';
 
-  Future<List<RepositoryFileResponse>> getRepositoryFiles(int projectId) async {
+  Future<List<RepositoryFileResponse>> getRepositoryFiles(int storageId) async {
     final token = await TokenStorage.getToken();
     
     if (token == null) {
       throw Exception('No auth token found');
     }
 
-    final url = Uri.parse('$baseUrl/api/v1/project/$projectId/repository');
+    final url = Uri.parse('$baseUrl/api/v1/storage/$storageId');
 
     final response = await http.get(
       url,
@@ -37,14 +37,14 @@ class RepositoryService {
     }
   }
 
-  Future<void> downloadFile(int projectId, int fileId, String fileName) async {
+  Future<void> downloadFile(int storageId, int fileId, String fileName) async {
     final token = await TokenStorage.getToken();
     
     if (token == null) {
       throw Exception('No auth token found');
     }
 
-    final url = Uri.parse('$baseUrl/api/v1/project/$projectId/repository/file/$fileId');
+    final url = Uri.parse('$baseUrl/api/v1/storage/$storageId/file/$fileId');
 
     final response = await http.get(
       url,
@@ -63,14 +63,14 @@ class RepositoryService {
     }
   }
 
-  Future<void> uploadFile(int projectId, Uint8List bytes, String fileName) async {
+  Future<void> uploadFile(int storageId, Uint8List bytes, String fileName) async {
     final token = await TokenStorage.getToken();
     
     if (token == null) {
       throw Exception('No auth token found');
     }
 
-    final url = Uri.parse('$baseUrl/api/v1/project/$projectId/repository');
+    final url = Uri.parse('$baseUrl/api/v1/storage/$storageId');
 
     var request = http.MultipartRequest('POST', url);
     request.headers['Authorization'] = 'Bearer $token';
@@ -95,14 +95,14 @@ class RepositoryService {
     }
   }
 
-  Future<void> deleteFile(int projectId, int fileId) async {
+  Future<void> deleteFile(int storageId, int fileId) async {
     final token = await TokenStorage.getToken();
     
     if (token == null) {
       throw Exception('No auth token found');
     }
 
-    final url = Uri.parse('$baseUrl/api/v1/project/$projectId/repository/file/$fileId');
+    final url = Uri.parse('$baseUrl/api/v1/storage/$storageId/file/$fileId');
 
     final response = await http.delete(
       url,
