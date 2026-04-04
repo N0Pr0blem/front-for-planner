@@ -1,6 +1,7 @@
 import 'package:it_planner/screen/task_tracking_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:it_planner/widgets/assign_task_dialog.dart';
+import 'package:it_planner/widgets/comments_section.dart';
 import '../theme/colors.dart';
 import '../service/task_service.dart';
 import '../dto/task/task_detail_response.dart';
@@ -117,59 +118,62 @@ class _TaskDetailPanelState extends State<TaskDetailPanel> {
   }
 
   Widget _buildMobileLayout(BuildContext context, TaskDetailResponse task) {
-  return SingleChildScrollView(
-    padding: const EdgeInsets.all(16),
-    child: Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        _buildMobileStatusCard(task),
-        const SizedBox(height: 16),
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _buildMobileStatusCard(task),
+          const SizedBox(height: 16),
 
-        // Приоритет и объем — в одну строку
-        Row(
-          children: [
-            Expanded(
-              child: _buildMobileInfoCard(
-                label: 'Приоритет',
-                value: task.priority,
-                color: _getPriorityColor(task.priority),
+          // Приоритет и объем — в одну строку
+          Row(
+            children: [
+              Expanded(
+                child: _buildMobileInfoCard(
+                  label: 'Приоритет',
+                  value: task.priority,
+                  color: _getPriorityColor(task.priority),
+                ),
               ),
-            ),
-            const SizedBox(width: 8),
-            Expanded(
-              child: _buildMobileInfoCard(
-                label: 'Объем',
-                value: task.complexity,
-                color: _getComplexityColor(task.complexity),
+              const SizedBox(width: 8),
+              Expanded(
+                child: _buildMobileInfoCard(
+                  label: 'Объем',
+                  value: task.complexity,
+                  color: _getComplexityColor(task.complexity),
+                ),
               ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 24),
+            ],
+          ),
+          const SizedBox(height: 24),
 
-        // ТОЛЬКО ОДНА КНОПКА - Время и назначения (ведет на TaskTrackingScreen)
-        _buildTrackingInfoButton(
-          context, 
-          widget.trekking?.hourSum ?? 0.0,
-          widget.trekking?.trekkingList.length ?? 0,
-        ),
-        const SizedBox(height: 24),
+          // ТОЛЬКО ОДНА КНОПКА - Время и назначения (ведет на TaskTrackingScreen)
+          _buildTrackingInfoButton(
+            context,
+            widget.trekking?.hourSum ?? 0.0,
+            widget.trekking?.trekkingList.length ?? 0,
+          ),
+          const SizedBox(height: 24),
 
-        // Описание — с прокруткой
-        _MobileDescriptionSection(
-          description: _taskDescription,
-          isLoading: _isDescriptionLoading,
-          onRefresh: _loadTaskDescription,
-        ),
-        const SizedBox(height: 24),
+          // Описание — с прокруткой
+          _MobileDescriptionSection(
+            description: _taskDescription,
+            isLoading: _isDescriptionLoading,
+            onRefresh: _loadTaskDescription,
+          ),
+          const SizedBox(height: 24),
 
-        // Документы
-        TaskDocumentsSection(storageId: task.storageId),
-        const SizedBox(height: 32),
-      ],
-    ),
-  );
-}
+          // Документы
+          TaskDocumentsSection(storageId: task.storageId),
+          const SizedBox(height: 32),
+
+          CommentsSection(key: ValueKey('comments_${task.id}'),taskId: task.id),
+          const SizedBox(height: 32),
+        ],
+      ),
+    );
+  }
 
   Widget _buildMobileStatusCard(TaskDetailResponse task) {
     return Container(
@@ -579,6 +583,7 @@ class _TaskDetailPanelState extends State<TaskDetailPanel> {
                           ),
                           const SizedBox(height: 24),
                           TaskDocumentsSection(storageId: task.storageId),
+
                           if (widget.trekking != null &&
                               widget.trekking!.trekkingList.isNotEmpty)
                             _TrekkingSection(
@@ -589,6 +594,10 @@ class _TaskDetailPanelState extends State<TaskDetailPanel> {
                                 }
                               },
                             ),
+
+                          const SizedBox(height: 24),
+                          CommentsSection(key: ValueKey('comments_${task.id}'),taskId: task.id),
+                          const SizedBox(height: 32),
                         ],
                       ),
                     ),
