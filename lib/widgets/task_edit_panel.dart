@@ -1,5 +1,7 @@
+import 'package:flutter/services.dart';
 import 'package:it_planner/dto/task/trekking_response.dart';
 import 'package:flutter/material.dart';
+import 'package:it_planner/widgets/ai_improve_button.dart';
 import '../theme/colors.dart';
 import '../service/task_service.dart';
 import '../dto/task/task_detail_response.dart';
@@ -353,153 +355,155 @@ class _TaskEditPanelState extends State<TaskEditPanel>
       ),
     );
   }
-// Приоритет (Urgency)
-Widget _buildMobileUrgencySelector() {
-  final urgencies = [
-    _UrgencyItem('Срочно', Colors.red),
-    _UrgencyItem('Средний приоритет', Colors.orange),
-    _UrgencyItem('Не срочно', Colors.green),
-  ];
-  final current = urgencies.firstWhere(
-    (u) => u.label == _selectedUrgency,
-    orElse: () => urgencies.first,
-  );
 
-  return GestureDetector(
-    onTap: () {
-      showModalBottomSheet(
-        context: context,
-        builder: (context) {
-          return Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Padding(
-                padding: const EdgeInsets.all(16),
-                child: Text(
-                  'Выберите приоритет',
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                ),
-              ),
-              ...urgencies.map((urgency) {
-                return ListTile(
-                  title: Text(urgency.label),
-                  leading: Container(
-                    width: 8,
-                    height: 8,
-                    decoration: BoxDecoration(
-                      color: urgency.color,
-                      shape: BoxShape.circle,
-                    ),
+// Приоритет (Urgency)
+  Widget _buildMobileUrgencySelector() {
+    final urgencies = [
+      _UrgencyItem('Срочно', Colors.red),
+      _UrgencyItem('Средний приоритет', Colors.orange),
+      _UrgencyItem('Не срочно', Colors.green),
+    ];
+    final current = urgencies.firstWhere(
+      (u) => u.label == _selectedUrgency,
+      orElse: () => urgencies.first,
+    );
+
+    return GestureDetector(
+      onTap: () {
+        showModalBottomSheet(
+          context: context,
+          builder: (context) {
+            return Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Text(
+                    'Выберите приоритет',
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                   ),
-                  onTap: () {
-                    setState(() => _selectedUrgency = urgency.label);
-                    Navigator.pop(context);
-                  },
-                );
-              }).toList(),
-              Padding(
-                padding: const EdgeInsets.all(16),
-                child: OutlinedButton(
-                  onPressed: () => Navigator.pop(context),
-                  child: const Text('Отмена'),
                 ),
-              ),
-            ],
-          );
-        },
-      );
-    },
-    child: Container(
-      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppColors.cardBorder),
+                ...urgencies.map((urgency) {
+                  return ListTile(
+                    title: Text(urgency.label),
+                    leading: Container(
+                      width: 8,
+                      height: 8,
+                      decoration: BoxDecoration(
+                        color: urgency.color,
+                        shape: BoxShape.circle,
+                      ),
+                    ),
+                    onTap: () {
+                      setState(() => _selectedUrgency = urgency.label);
+                      Navigator.pop(context);
+                    },
+                  );
+                }).toList(),
+                Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: OutlinedButton(
+                    onPressed: () => Navigator.pop(context),
+                    child: const Text('Отмена'),
+                  ),
+                ),
+              ],
+            );
+          },
+        );
+      },
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: AppColors.cardBorder),
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(current.label),
+            const Icon(Icons.arrow_drop_down, color: AppColors.textHint),
+          ],
+        ),
       ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Text(current.label),
-          const Icon(Icons.arrow_drop_down, color: AppColors.textHint),
-        ],
-      ),
-    ),
-  );
-}
+    );
+  }
 
 // Объем (Complexity)
-Widget _buildMobileComplexitySelector() {
-  final complexities = [
-    _ComplexityItem('Большая', Colors.purple),
-    _ComplexityItem('Умеренная', Colors.blue),
-    _ComplexityItem('Небольшая', Colors.teal),
-  ];
-  final current = complexities.firstWhere(
-    (c) => c.label == _selectedComplexity,
-    orElse: () => complexities.first,
-  );
+  Widget _buildMobileComplexitySelector() {
+    final complexities = [
+      _ComplexityItem('Большая', Colors.purple),
+      _ComplexityItem('Умеренная', Colors.blue),
+      _ComplexityItem('Небольшая', Colors.teal),
+    ];
+    final current = complexities.firstWhere(
+      (c) => c.label == _selectedComplexity,
+      orElse: () => complexities.first,
+    );
 
-  return GestureDetector(
-    onTap: () {
-      showModalBottomSheet(
-        context: context,
-        builder: (context) {
-          return Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Padding(
-                padding: const EdgeInsets.all(16),
-                child: Text(
-                  'Выберите объем',
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                ),
-              ),
-              ...complexities.map((complexity) {
-                return ListTile(
-                  title: Text(complexity.label),
-                  leading: Container(
-                    width: 8,
-                    height: 8,
-                    decoration: BoxDecoration(
-                      color: complexity.color,
-                      shape: BoxShape.circle,
-                    ),
+    return GestureDetector(
+      onTap: () {
+        showModalBottomSheet(
+          context: context,
+          builder: (context) {
+            return Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Text(
+                    'Выберите объем',
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                   ),
-                  onTap: () {
-                    setState(() => _selectedComplexity = complexity.label);
-                    Navigator.pop(context);
-                  },
-                );
-              }).toList(),
-              Padding(
-                padding: const EdgeInsets.all(16),
-                child: OutlinedButton(
-                  onPressed: () => Navigator.pop(context),
-                  child: const Text('Отмена'),
                 ),
-              ),
-            ],
-          );
-        },
-      );
-    },
-    child: Container(
-      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppColors.cardBorder),
+                ...complexities.map((complexity) {
+                  return ListTile(
+                    title: Text(complexity.label),
+                    leading: Container(
+                      width: 8,
+                      height: 8,
+                      decoration: BoxDecoration(
+                        color: complexity.color,
+                        shape: BoxShape.circle,
+                      ),
+                    ),
+                    onTap: () {
+                      setState(() => _selectedComplexity = complexity.label);
+                      Navigator.pop(context);
+                    },
+                  );
+                }).toList(),
+                Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: OutlinedButton(
+                    onPressed: () => Navigator.pop(context),
+                    child: const Text('Отмена'),
+                  ),
+                ),
+              ],
+            );
+          },
+        );
+      },
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: AppColors.cardBorder),
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(current.label),
+            const Icon(Icons.arrow_drop_down, color: AppColors.textHint),
+          ],
+        ),
       ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Text(current.label),
-          const Icon(Icons.arrow_drop_down, color: AppColors.textHint),
-        ],
-      ),
-    ),
-  );
-}
+    );
+  }
+
   Widget _buildMobileStatusSelector() {
     final statuses = [
       _StatusItem('TO_DO', 'Нужно сделать', Colors.grey),
@@ -701,15 +705,16 @@ Widget _buildMobileComplexitySelector() {
                             ),
                             const SizedBox(height: 24),
 
-                            // Описание
+                            // В _buildDesktopLayout
                             _DescriptionEditSection(
                               controller: _descriptionController,
-                              isLoading: _isDescriptionLoading,
+                              taskTitle: _nameController.text,
                             ),
                             const SizedBox(height: 24),
 
                             // Документы
-                            TaskDocumentsSection(storageId: widget.task.storageId),
+                            TaskDocumentsSection(
+                                storageId: widget.task.storageId),
 
                             // Трекинг
                             if (widget.trekking != null &&
@@ -808,30 +813,92 @@ class _SaveButton extends StatelessWidget {
   }
 }
 
-class _DescriptionEditSection extends StatelessWidget {
+class _DescriptionEditSection extends StatefulWidget {
   final TextEditingController controller;
-  final bool isLoading;
+  final String? taskTitle;
 
   const _DescriptionEditSection({
     Key? key,
     required this.controller,
-    this.isLoading = false,
+    this.taskTitle,
   }) : super(key: key);
+
+  @override
+  State<_DescriptionEditSection> createState() =>
+      _DescriptionEditSectionState();
+}
+
+class _DescriptionEditSectionState extends State<_DescriptionEditSection> {
+  String? _aiGeneratedText;
+  bool _showAIPreview = false;
+
+  String _formatAIText(String text) {
+    String formatted = text;
+
+    formatted = formatted.replaceAllMapped(
+      RegExp(r'^(\d+\.)\s+(.+)$', multiLine: true),
+      (match) => '\n${match[1]} ${match[2]}\n',
+    );
+
+    formatted = formatted.replaceAllMapped(
+      RegExp(r'\*\*(.+?)\*\*'),
+      (match) => match[1] ?? '',
+    );
+
+    formatted = formatted.replaceAllMapped(
+      RegExp(r'^-\s+(.+)$', multiLine: true),
+      (match) => '• ${match[1]}\n',
+    );
+
+    return formatted.trim();
+  }
+
+  void _copyToClipboard() {
+    if (_aiGeneratedText != null) {
+      Clipboard.setData(ClipboardData(text: _aiGeneratedText!));
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Текст скопирован в буфер обмена'),
+          backgroundColor: Colors.green,
+          behavior: SnackBarBehavior.floating,
+          duration: Duration(seconds: 2),
+        ),
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
-          'Описание',
-          style: TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.bold,
-            color: AppColors.textPrimary,
-          ),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            const Text(
+              'Описание',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                color: AppColors.textPrimary,
+              ),
+            ),
+            AIImproveButton(
+              currentDescription: widget.controller.text,
+              taskTitle: widget.taskTitle ?? 'Новая задача',
+              onPreviewGenerated: (generatedText) {
+                debugPrint('Получен текст от ИИ: $generatedText'); // Для отладки
+                setState(() {
+                  _aiGeneratedText = generatedText;
+                  _showAIPreview = true;
+                });
+              },
+            ),
+          ],
         ),
         const SizedBox(height: 12),
+
+        // Поле описания
         Container(
           width: double.infinity,
           padding: const EdgeInsets.all(16),
@@ -842,33 +909,213 @@ class _DescriptionEditSection extends StatelessWidget {
               color: AppColors.cardBorder.withOpacity(0.5),
             ),
           ),
-          child: isLoading
-              ? const Center(
-                  child: SizedBox(
-                    width: 20,
-                    height: 20,
-                    child: CircularProgressIndicator(strokeWidth: 2),
-                  ),
-                )
-              : TextFormField(
-                  controller: controller,
-                  maxLines: 8,
-                  style: const TextStyle(
-                    fontSize: 14,
-                    color: AppColors.textPrimary,
-                    height: 1.5,
-                  ),
-                  decoration: const InputDecoration(
-                    border: InputBorder.none,
-                    hintText: 'Введите описание задачи...',
-                    hintStyle: TextStyle(
-                      fontSize: 14,
-                      color: AppColors.textHint,
-                      fontStyle: FontStyle.italic,
+          child: TextFormField(
+            controller: widget.controller,
+            maxLines: null,
+            minLines: 6,
+            style: const TextStyle(
+              fontSize: 14,
+              color: AppColors.textPrimary,
+              height: 1.5,
+            ),
+            decoration: const InputDecoration(
+              border: InputBorder.none,
+              hintText: 'Введите описание задачи...',
+              hintStyle: TextStyle(
+                fontSize: 14,
+                color: AppColors.textHint,
+                fontStyle: FontStyle.italic,
+              ),
+            ),
+            validator: (value) {
+              if (value == null || value.isEmpty) {
+                return 'Введите описание задачи';
+              }
+              return null;
+            },
+          ),
+        ),
+
+        // Блок с предпросмотром от ИИ (показывается ПОД полем описания)
+        if (_showAIPreview && _aiGeneratedText != null)
+          Padding(
+            padding: const EdgeInsets.only(top: 16),
+            child: Container(
+              width: double.infinity,
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [
+                    AppColors.primary.withOpacity(0.08),
+                    AppColors.primary.withOpacity(0.03),
+                  ],
+                ),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                  color: AppColors.primary.withOpacity(0.3),
+                ),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Заголовок блока
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: AppColors.primary.withOpacity(0.1),
+                      borderRadius: const BorderRadius.only(
+                        topLeft: Radius.circular(12),
+                        topRight: Radius.circular(12),
+                      ),
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(
+                          Icons.auto_awesome,
+                          size: 16,
+                          color: AppColors.primary,
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            'Предпросмотр от ИИ',
+                            style: TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w600,
+                              color: AppColors.primary,
+                            ),
+                          ),
+                        ),
+                        // Кнопка копировать
+                        TextButton(
+                          onPressed: _copyToClipboard,
+                          style: TextButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(horizontal: 8),
+                            minimumSize: const Size(30, 30),
+                          ),
+                          child: Row(
+                            children: [
+                              Icon(
+                                Icons.copy,
+                                size: 14,
+                                color: AppColors.primary,
+                              ),
+                              const SizedBox(width: 4),
+                              Text(
+                                'Копировать',
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  color: AppColors.primary,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(width: 4),
+                        // Кнопка скрыть
+                        TextButton(
+                          onPressed: () {
+                            setState(() {
+                              _showAIPreview = false;
+                              _aiGeneratedText = null;
+                            });
+                          },
+                          style: TextButton.styleFrom(
+                            padding: EdgeInsets.zero,
+                            minimumSize: const Size(30, 30),
+                          ),
+                          child: Icon(
+                            Icons.close,
+                            size: 16,
+                            color: AppColors.textHint,
+                          ),
+                        ),
+                      ],
                     ),
                   ),
-                ),
-        ),
+
+                  // Содержимое сгенерированного текста
+                  Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        SelectableText(
+                          _formatAIText(_aiGeneratedText!),
+                          style: const TextStyle(
+                            fontSize: 14,
+                            color: AppColors.textPrimary,
+                            height: 1.5,
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.end,
+                          children: [
+                            OutlinedButton(
+                              onPressed: () {
+                                setState(() {
+                                  _showAIPreview = false;
+                                  _aiGeneratedText = null;
+                                });
+                              },
+                              style: OutlinedButton.styleFrom(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 12,
+                                  vertical: 8,
+                                ),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                              ),
+                              child: Text(
+                                'Отмена',
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  color: AppColors.textHint,
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            ElevatedButton(
+                              onPressed: () {
+                                widget.controller.text = _aiGeneratedText!;
+                                setState(() {
+                                  _showAIPreview = false;
+                                  _aiGeneratedText = null;
+                                });
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content: Text('Описание обновлено!'),
+                                    backgroundColor: Colors.green,
+                                    behavior: SnackBarBehavior.floating,
+                                    duration: Duration(seconds: 2),
+                                  ),
+                                );
+                              },
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: AppColors.primary,
+                                foregroundColor: Colors.white,
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 12,
+                                  vertical: 8,
+                                ),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                              ),
+                              child: const Text('Применить'),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
       ],
     );
   }

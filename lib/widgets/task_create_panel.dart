@@ -1,5 +1,6 @@
-// task_create_panel.dart
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:it_planner/widgets/ai_improve_button.dart';
 import '../theme/colors.dart';
 import '../service/task_service.dart';
 import '../dto/task/task_detail_response.dart';
@@ -30,7 +31,7 @@ class _TaskCreatePanelState extends State<TaskCreatePanel>
   final _formKey = GlobalKey<FormState>();
   final _nameController = TextEditingController();
   final _descriptionController = TextEditingController();
-  
+
   String _selectedUrgency = 'Срочно';
   String _selectedComplexity = 'Умеренная';
   bool _isLoading = false;
@@ -100,7 +101,6 @@ class _TaskCreatePanelState extends State<TaskCreatePanel>
           backgroundColor: Colors.green,
         ),
       );
-
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -133,7 +133,8 @@ class _TaskCreatePanelState extends State<TaskCreatePanel>
                     children: [
                       // ВЕРХНИЙ БЛОК С КРЕСТИКОМ И КНОПКАМИ
                       Padding(
-                        padding: const EdgeInsets.only(top: 24, left: 24, right: 24),
+                        padding:
+                            const EdgeInsets.only(top: 24, left: 24, right: 24),
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
@@ -225,6 +226,7 @@ class _TaskCreatePanelState extends State<TaskCreatePanel>
                             // Описание
                             _DescriptionEditSection(
                               controller: _descriptionController,
+                              taskTitle: _nameController.text,
                             ),
                           ],
                         ),
@@ -421,7 +423,9 @@ class _UrgencyItem {
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
-      other is _UrgencyItem && runtimeType == other.runtimeType && label == other.label;
+      other is _UrgencyItem &&
+          runtimeType == other.runtimeType &&
+          label == other.label;
 
   @override
   int get hashCode => label.hashCode;
@@ -535,34 +539,99 @@ class _ComplexityItem {
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
-      other is _ComplexityItem && runtimeType == other.runtimeType && label == other.label;
+      other is _ComplexityItem &&
+          runtimeType == other.runtimeType &&
+          label == other.label;
 
   @override
   int get hashCode => label.hashCode;
 }
 
-class _DescriptionEditSection extends StatelessWidget {
+class _DescriptionEditSection extends StatefulWidget {
   final TextEditingController controller;
+  final String? taskTitle;
 
   const _DescriptionEditSection({
     Key? key,
     required this.controller,
+    this.taskTitle,
   }) : super(key: key);
+
+  @override
+  State<_DescriptionEditSection> createState() =>
+      _DescriptionEditSectionState();
+}
+
+class _DescriptionEditSectionState extends State<_DescriptionEditSection> {
+  String? _aiGeneratedText;
+  bool _showAIPreview = false;
+
+  String _formatAIText(String text) {
+    String formatted = text;
+
+    formatted = formatted.replaceAllMapped(
+      RegExp(r'^(\d+\.)\s+(.+)$', multiLine: true),
+      (match) => '\n${match[1]} ${match[2]}\n',
+    );
+
+    formatted = formatted.replaceAllMapped(
+      RegExp(r'\*\*(.+?)\*\*'),
+      (match) => match[1] ?? '',
+    );
+
+    formatted = formatted.replaceAllMapped(
+      RegExp(r'^-\s+(.+)$', multiLine: true),
+      (match) => '• ${match[1]}\n',
+    );
+
+    return formatted.trim();
+  }
+
+  void _copyToClipboard() {
+    if (_aiGeneratedText != null) {
+      Clipboard.setData(ClipboardData(text: _aiGeneratedText!));
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Текст скопирован в буфер обмена'),
+          backgroundColor: Colors.green,
+          behavior: SnackBarBehavior.floating,
+          duration: Duration(seconds: 2),
+        ),
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
-          'Описание',
-          style: TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.bold,
-            color: AppColors.textPrimary,
-          ),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            const Text(
+              'Описание',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                color: AppColors.textPrimary,
+              ),
+            ),
+            AIImproveButton(
+              currentDescription: widget.controller.text,
+              taskTitle: widget.taskTitle ?? 'Новая задача',
+              onPreviewGenerated: (generatedText) {
+                setState(() {
+                  _aiGeneratedText = generatedText;
+                  _showAIPreview = true;
+                });
+              },
+            ),
+          ],
         ),
         const SizedBox(height: 12),
+
+        // Поле описания
         Container(
           width: double.infinity,
           padding: const EdgeInsets.all(16),
@@ -574,8 +643,9 @@ class _DescriptionEditSection extends StatelessWidget {
             ),
           ),
           child: TextFormField(
-            controller: controller,
-            maxLines: 8,
+            controller: widget.controller,
+            maxLines: null,
+            minLines: 6,
             style: const TextStyle(
               fontSize: 14,
               color: AppColors.textPrimary,
@@ -598,6 +668,187 @@ class _DescriptionEditSection extends StatelessWidget {
             },
           ),
         ),
+
+        // Блок с предпросмотром от ИИ (показывается ПОД полем описания)
+        if (_showAIPreview && _aiGeneratedText != null)
+          Padding(
+            padding: const EdgeInsets.only(top: 16),
+            child: Container(
+              width: double.infinity,
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [
+                    AppColors.primary.withOpacity(0.08),
+                    AppColors.primary.withOpacity(0.03),
+                  ],
+                ),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                  color: AppColors.primary.withOpacity(0.3),
+                ),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Заголовок блока
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: AppColors.primary.withOpacity(0.1),
+                      borderRadius: const BorderRadius.only(
+                        topLeft: Radius.circular(12),
+                        topRight: Radius.circular(12),
+                      ),
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(
+                          Icons.auto_awesome,
+                          size: 16,
+                          color: AppColors.primary,
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            'Предпросмотр от ИИ',
+                            style: TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w600,
+                              color: AppColors.primary,
+                            ),
+                          ),
+                        ),
+                        // Кнопка копировать
+                        TextButton(
+                          onPressed: _copyToClipboard,
+                          style: TextButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(horizontal: 8),
+                            minimumSize: const Size(30, 30),
+                          ),
+                          child: Row(
+                            children: [
+                              Icon(
+                                Icons.copy,
+                                size: 14,
+                                color: AppColors.primary,
+                              ),
+                              const SizedBox(width: 4),
+                              Text(
+                                'Копировать',
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  color: AppColors.primary,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(width: 4),
+                        // Кнопка скрыть
+                        TextButton(
+                          onPressed: () {
+                            setState(() {
+                              _showAIPreview = false;
+                              _aiGeneratedText = null;
+                            });
+                          },
+                          style: TextButton.styleFrom(
+                            padding: EdgeInsets.zero,
+                            minimumSize: const Size(30, 30),
+                          ),
+                          child: Icon(
+                            Icons.close,
+                            size: 16,
+                            color: AppColors.textHint,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+
+                  // Содержимое сгенерированного текста
+                  Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        SelectableText(
+                          _formatAIText(_aiGeneratedText!),
+                          style: const TextStyle(
+                            fontSize: 14,
+                            color: AppColors.textPrimary,
+                            height: 1.5,
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.end,
+                          children: [
+                            OutlinedButton(
+                              onPressed: () {
+                                setState(() {
+                                  _showAIPreview = false;
+                                  _aiGeneratedText = null;
+                                });
+                              },
+                              style: OutlinedButton.styleFrom(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 12,
+                                  vertical: 8,
+                                ),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                              ),
+                              child: Text(
+                                'Отмена',
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  color: AppColors.textHint,
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            ElevatedButton(
+                              onPressed: () {
+                                widget.controller.text = _aiGeneratedText!;
+                                setState(() {
+                                  _showAIPreview = false;
+                                  _aiGeneratedText = null;
+                                });
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content: Text('Описание обновлено!'),
+                                    backgroundColor: Colors.green,
+                                    behavior: SnackBarBehavior.floating,
+                                    duration: Duration(seconds: 2),
+                                  ),
+                                );
+                              },
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: AppColors.primary,
+                                foregroundColor: Colors.white,
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 12,
+                                  vertical: 8,
+                                ),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                              ),
+                              child: const Text('Применить'),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
       ],
     );
   }
