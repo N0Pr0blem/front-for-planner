@@ -365,7 +365,7 @@ class _TrackingItemCard extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Задача #${item.taskDetailsId}',
+                  '${item.taskName}',
                   style: const TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.w600,

@@ -1,6 +1,4 @@
-// widgets/comments_section.dart
 import 'dart:convert';
-import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import '../service/comment_service.dart';
 import '../dto/comment/comment_response.dart';
@@ -24,8 +22,7 @@ class _CommentsSectionState extends State<CommentsSection> {
   bool _isSubmitting = false;
   int? _editingCommentId;
   bool _showAddForm = false;
-  
-  // Контроллеры создаем лениво, только когда нужны
+
   TextEditingController? _commentController;
   TextEditingController? _editController;
 
@@ -39,9 +36,7 @@ class _CommentsSectionState extends State<CommentsSection> {
   void didUpdateWidget(CommentsSection oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (widget.taskId != oldWidget.taskId) {
-      // Очищаем старые контроллеры
       _disposeControllers();
-      // Перезагружаем данные
       _loadComments();
       setState(() {
         _showAddForm = false;
@@ -75,10 +70,8 @@ class _CommentsSectionState extends State<CommentsSection> {
 
   Future<void> _loadComments() async {
     if (!mounted) return;
-    
-    setState(() {
-      _isLoading = true;
-    });
+
+    setState(() => _isLoading = true);
 
     try {
       final comments = await CommentService.getTaskComments(widget.taskId);
@@ -91,9 +84,7 @@ class _CommentsSectionState extends State<CommentsSection> {
     } catch (e) {
       print('Ошибка загрузки комментариев: $e');
       if (mounted) {
-        setState(() {
-          _isLoading = false;
-        });
+        setState(() => _isLoading = false);
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Ошибка загрузки комментариев: $e'),
@@ -108,9 +99,7 @@ class _CommentsSectionState extends State<CommentsSection> {
     final controller = _getCommentController();
     if (controller.text.trim().isEmpty) return;
 
-    setState(() {
-      _isSubmitting = true;
-    });
+    setState(() => _isSubmitting = true);
 
     try {
       final newComment = await CommentService.createComment(
@@ -128,9 +117,7 @@ class _CommentsSectionState extends State<CommentsSection> {
       }
     } catch (e) {
       if (mounted) {
-        setState(() {
-          _isSubmitting = false;
-        });
+        setState(() => _isSubmitting = false);
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Ошибка создания комментария: $e'),
@@ -145,9 +132,7 @@ class _CommentsSectionState extends State<CommentsSection> {
     final controller = _getEditController();
     if (controller.text.trim().isEmpty || _editingCommentId == null) return;
 
-    setState(() {
-      _isSubmitting = true;
-    });
+    setState(() => _isSubmitting = true);
 
     try {
       final updatedComment = await CommentService.updateComment(
@@ -159,9 +144,7 @@ class _CommentsSectionState extends State<CommentsSection> {
       if (mounted) {
         setState(() {
           final index = _comments.indexWhere((c) => c.id == _editingCommentId);
-          if (index != -1) {
-            _comments[index] = updatedComment;
-          }
+          if (index != -1) _comments[index] = updatedComment;
           _editingCommentId = null;
           controller.clear();
           _isSubmitting = false;
@@ -169,9 +152,7 @@ class _CommentsSectionState extends State<CommentsSection> {
       }
     } catch (e) {
       if (mounted) {
-        setState(() {
-          _isSubmitting = false;
-        });
+        setState(() => _isSubmitting = false);
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Ошибка обновления комментария: $e'),
@@ -211,9 +192,7 @@ class _CommentsSectionState extends State<CommentsSection> {
       );
 
       if (mounted) {
-        setState(() {
-          _comments.removeWhere((c) => c.id == commentId);
-        });
+        setState(() => _comments.removeWhere((c) => c.id == commentId));
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('Комментарий удален'),
@@ -268,13 +247,12 @@ class _CommentsSectionState extends State<CommentsSection> {
     if (profileImage == null || profileImage.isEmpty) {
       return _buildDefaultAvatar();
     }
-    
+
     try {
-      // Проверяем, является ли строка base64
       if (profileImage.contains('.jpg') || profileImage.contains('.png')) {
         return _buildDefaultAvatar();
       }
-      
+
       return ClipRRect(
         borderRadius: BorderRadius.circular(16),
         child: Image.memory(
@@ -282,9 +260,7 @@ class _CommentsSectionState extends State<CommentsSection> {
           width: 32,
           height: 32,
           fit: BoxFit.cover,
-          errorBuilder: (context, error, stackTrace) {
-            return _buildDefaultAvatar();
-          },
+          errorBuilder: (context, error, stackTrace) => _buildDefaultAvatar(),
         ),
       );
     } catch (e) {
@@ -298,10 +274,24 @@ class _CommentsSectionState extends State<CommentsSection> {
       width: 32,
       height: 32,
       decoration: BoxDecoration(
-        color: AppColors.primary.withOpacity(0.1),
+        gradient: LinearGradient(
+          colors: [
+            AppColors.primary.withOpacity(0.2),
+            AppColors.primary.withOpacity(0.4),
+          ],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
         borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.primary.withOpacity(0.3),
+            blurRadius: 4,
+            offset: const Offset(0, 2),
+          ),
+        ],
       ),
-      child: Icon(
+      child: const Icon(
         Icons.person,
         size: 18,
         color: AppColors.primary,
@@ -321,18 +311,33 @@ class _CommentsSectionState extends State<CommentsSection> {
             const Text(
               'Комментарии',
               style: TextStyle(
-                fontSize: 18,
+                fontSize: 20,
                 fontWeight: FontWeight.bold,
                 color: AppColors.textPrimary,
+                letterSpacing: 0.5,
               ),
             ),
             Container(
               decoration: BoxDecoration(
-                color: AppColors.primary.withOpacity(0.1),
-                borderRadius: BorderRadius.circular(8),
+                gradient: LinearGradient(
+                  colors: [
+                    AppColors.primary.withOpacity(0.15),
+                    AppColors.primary.withOpacity(0.25),
+                  ],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
+                borderRadius: BorderRadius.circular(12),
+                boxShadow: [
+                  BoxShadow(
+                    color: AppColors.primary.withOpacity(0.2),
+                    blurRadius: 8,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
               ),
               child: IconButton(
-                icon: Icon(Icons.add, color: AppColors.primary, size: 20),
+                icon: Icon(Icons.add, color: AppColors.primary, size: 22),
                 onPressed: () {
                   setState(() {
                     _showAddForm = !_showAddForm;
@@ -341,22 +346,39 @@ class _CommentsSectionState extends State<CommentsSection> {
                     }
                   });
                 },
-                padding: const EdgeInsets.all(8),
+                padding: const EdgeInsets.all(10),
                 constraints: const BoxConstraints(),
               ),
             ),
           ],
         ),
-        const SizedBox(height: 16),
+        const SizedBox(height: 20),
 
         // Форма добавления комментария
         if (_showAddForm)
           Container(
-            margin: const EdgeInsets.only(bottom: 16),
+            margin: const EdgeInsets.only(bottom: 24),
             decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: AppColors.cardBorder),
+              gradient: LinearGradient(
+                colors: [
+                  Colors.white,
+                  AppColors.background.withOpacity(0.5),
+                ],
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+              ),
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(
+                color: AppColors.primary.withOpacity(0.2),
+                width: 1.5,
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: AppColors.primary.withOpacity(0.1),
+                  blurRadius: 12,
+                  offset: const Offset(0, 4),
+                ),
+              ],
             ),
             child: Column(
               children: [
@@ -368,17 +390,17 @@ class _CommentsSectionState extends State<CommentsSection> {
                     hintText: 'Напишите комментарий...',
                     hintStyle: TextStyle(color: AppColors.textHint),
                     border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
+                      borderRadius: BorderRadius.circular(16),
                       borderSide: BorderSide.none,
                     ),
                     filled: true,
-                    fillColor: Colors.white,
-                    contentPadding: const EdgeInsets.all(16),
+                    fillColor: Colors.white.withOpacity(0.8),
+                    contentPadding: const EdgeInsets.all(20),
                   ),
                 ),
                 Divider(height: 1, color: AppColors.cardBorder),
                 Padding(
-                  padding: const EdgeInsets.all(12),
+                  padding: const EdgeInsets.all(16),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.end,
                     children: [
@@ -401,12 +423,14 @@ class _CommentsSectionState extends State<CommentsSection> {
                           backgroundColor: AppColors.primary,
                           foregroundColor: Colors.white,
                           padding: const EdgeInsets.symmetric(
-                            horizontal: 24,
-                            vertical: 10,
+                            horizontal: 28,
+                            vertical: 12,
                           ),
                           shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(8),
+                            borderRadius: BorderRadius.circular(10),
                           ),
+                          elevation: 4,
+                          shadowColor: AppColors.primary.withOpacity(0.4),
                         ),
                         child: _isSubmitting
                             ? const SizedBox(
@@ -414,11 +438,14 @@ class _CommentsSectionState extends State<CommentsSection> {
                                 height: 20,
                                 child: CircularProgressIndicator(
                                   strokeWidth: 2,
-                                  valueColor: AlwaysStoppedAnimation<Color>(
-                                      Colors.white),
+                                  valueColor:
+                                      AlwaysStoppedAnimation<Color>(Colors.white),
                                 ),
                               )
-                            : const Text('Отправить'),
+                            : const Text(
+                                'Отправить',
+                                style: TextStyle(fontWeight: FontWeight.w600),
+                              ),
                       ),
                     ],
                   ),
@@ -431,51 +458,98 @@ class _CommentsSectionState extends State<CommentsSection> {
         if (_isLoading)
           const Center(
             child: Padding(
-              padding: EdgeInsets.all(32),
+              padding: EdgeInsets.all(40),
               child: CircularProgressIndicator(),
             ),
           )
         else if (_comments.isEmpty)
           Container(
-            padding: const EdgeInsets.all(32),
+            padding: const EdgeInsets.all(40),
             decoration: BoxDecoration(
-              color: AppColors.background,
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: AppColors.cardBorder.withOpacity(0.5)),
+              gradient: LinearGradient(
+                colors: [
+                  AppColors.background,
+                  AppColors.background.withOpacity(0.5),
+                ],
+              ),
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(
+                color: AppColors.cardBorder.withOpacity(0.5),
+                width: 1.5,
+              ),
             ),
             child: Center(
-              child: Text(
-                'Нет комментариев',
-                style: TextStyle(
-                  fontSize: 14,
-                  color: AppColors.textHint,
-                  fontStyle: FontStyle.italic,
-                ),
+              child: Column(
+                children: [
+                  Icon(
+                    Icons.chat_bubble_outline,
+                    size: 48,
+                    color: AppColors.textHint.withOpacity(0.5),
+                  ),
+                  const SizedBox(height: 16),
+                  Text(
+                    'Нет комментариев',
+                    style: TextStyle(
+                      fontSize: 16,
+                      color: AppColors.textHint,
+                      fontStyle: FontStyle.italic,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ],
               ),
             ),
           )
         else
-          ListView.separated(
+          ListView.builder(
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
             key: PageStorageKey('comments_list_${widget.taskId}'),
             itemCount: _comments.length,
-            separatorBuilder: (context, index) => const SizedBox(height: 12),
             itemBuilder: (context, index) {
               final comment = _comments[index];
               final isEditing = _editingCommentId == comment.id;
+              final isLast = index == _comments.length - 1;
 
-              return Container(
-                key: ValueKey(comment.id),
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: AppColors.cardBorder.withOpacity(0.5)),
-                ),
-                child: isEditing
-                    ? _buildEditMode(comment)
-                    : _buildViewMode(comment),
+              return Column(
+                children: [
+                  // ✨ Улучшенная карточка комментария
+                  Container(
+                    key: ValueKey(comment.id),
+                    padding: const EdgeInsets.all(20),
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: [
+                          Colors.white,
+                          Colors.white.withOpacity(0.95),
+                        ],
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                      ),
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(
+                        color: AppColors.primary.withOpacity(0.15),
+                        width: 1.5,
+                      ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: AppColors.primary.withOpacity(0.08),
+                          blurRadius: 12,
+                          offset: const Offset(0, 4),
+                        ),
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.03),
+                          blurRadius: 8,
+                          offset: const Offset(0, 2),
+                        ),
+                      ],
+                    ),
+                    child: isEditing
+                        ? _buildEditMode(comment)
+                        : _buildViewMode(comment),
+                  ),
+                  const SizedBox(height: 16),
+                ],
               );
             },
           ),
@@ -493,23 +567,26 @@ class _CommentsSectionState extends State<CommentsSection> {
             Row(
               children: [
                 _buildAvatar(comment.author.profileImage),
-                const SizedBox(width: 12),
+                const SizedBox(width: 14),
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
                       comment.author.displayName,
                       style: const TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w600,
+                        fontSize: 15,
+                        fontWeight: FontWeight.w700,
                         color: AppColors.textPrimary,
+                        letterSpacing: 0.2,
                       ),
                     ),
+                    const SizedBox(height: 2),
                     Text(
                       _formatDate(comment.creationDate),
                       style: TextStyle(
                         fontSize: 12,
                         color: AppColors.textHint,
+                        fontWeight: FontWeight.w500,
                       ),
                     ),
                   ],
@@ -517,12 +594,17 @@ class _CommentsSectionState extends State<CommentsSection> {
               ],
             ),
             PopupMenuButton<String>(
-              icon: Icon(Icons.more_vert, color: AppColors.textHint, size: 20),
+              icon: Icon(
+                Icons.more_vert,
+                color: AppColors.textHint,
+                size: 22,
+              ),
               color: Colors.white,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(12),
                 side: BorderSide(color: AppColors.cardBorder),
               ),
+              elevation: 8,
               onSelected: (value) {
                 if (value == 'edit') {
                   _startEditing(comment);
@@ -535,7 +617,7 @@ class _CommentsSectionState extends State<CommentsSection> {
                   value: 'edit',
                   child: Row(
                     children: [
-                      Icon(Icons.edit, size: 18),
+                      Icon(Icons.edit, size: 18, color: AppColors.primary),
                       SizedBox(width: 12),
                       Text('Редактировать'),
                     ],
@@ -555,13 +637,14 @@ class _CommentsSectionState extends State<CommentsSection> {
             ),
           ],
         ),
-        const SizedBox(height: 12),
+        const SizedBox(height: 16),
         Text(
           comment.text,
           style: const TextStyle(
-            fontSize: 14,
+            fontSize: 15,
             color: AppColors.textPrimary,
-            height: 1.4,
+            height: 1.5,
+            letterSpacing: 0.3,
           ),
         ),
       ],
@@ -574,9 +657,11 @@ class _CommentsSectionState extends State<CommentsSection> {
       children: [
         TextField(
           controller: _getEditController(),
-          maxLines: 3,
+          maxLines: 4,
           autofocus: true,
           decoration: InputDecoration(
+            hintText: 'Введите текст комментария...',
+            hintStyle: TextStyle(color: AppColors.textHint),
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
               borderSide: BorderSide(color: AppColors.cardBorder),
@@ -585,10 +670,16 @@ class _CommentsSectionState extends State<CommentsSection> {
               borderRadius: BorderRadius.circular(12),
               borderSide: BorderSide(color: AppColors.primary, width: 2),
             ),
-            contentPadding: const EdgeInsets.all(12),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide(color: AppColors.cardBorder),
+            ),
+            filled: true,
+            fillColor: Colors.white,
+            contentPadding: const EdgeInsets.all(16),
           ),
         ),
-        const SizedBox(height: 12),
+        const SizedBox(height: 16),
         Row(
           mainAxisAlignment: MainAxisAlignment.end,
           children: [
@@ -599,16 +690,19 @@ class _CommentsSectionState extends State<CommentsSection> {
                 style: TextStyle(color: AppColors.textHint),
               ),
             ),
-            const SizedBox(width: 8),
+            const SizedBox(width: 12),
             ElevatedButton(
               onPressed: _isSubmitting ? null : _updateComment,
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.primary,
                 foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
                 shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8),
+                  borderRadius: BorderRadius.circular(10),
                 ),
+                elevation: 4,
+                shadowColor: AppColors.primary.withOpacity(0.4),
               ),
               child: _isSubmitting
                   ? const SizedBox(
@@ -619,7 +713,10 @@ class _CommentsSectionState extends State<CommentsSection> {
                         valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
                       ),
                     )
-                  : const Text('Сохранить'),
+                  : const Text(
+                      'Сохранить',
+                      style: TextStyle(fontWeight: FontWeight.w600),
+                    ),
             ),
           ],
         ),

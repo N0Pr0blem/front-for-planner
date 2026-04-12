@@ -50,6 +50,7 @@ class TrackingItem {
   final String employeeFirstName;
   final String employeeSecondName;
   final int taskDetailsId;
+  final String taskName;
 
   TrackingItem({
     required this.id,
@@ -58,6 +59,7 @@ class TrackingItem {
     required this.employeeFirstName,
     required this.employeeSecondName,
     required this.taskDetailsId,
+    required this.taskName,
   });
 
   factory TrackingItem.fromJson(Map<String, dynamic> json) {
@@ -68,6 +70,7 @@ class TrackingItem {
       employeeFirstName: json['employee_first_name'] as String,
       employeeSecondName: json['employee_second_name'] as String,
       taskDetailsId: json['task_details_id'] as int,
+      taskName: json['task_name'] as String,
     );
   }
 

@@ -14,6 +14,7 @@ class TasksListPanel extends StatefulWidget {
   final VoidCallback? onTasksUpdated;
   final Function(TaskDetailResponse)? onTaskCreated;
   final bool isMobile;
+  final bool isCreating;
 
   const TasksListPanel({
     Key? key,
@@ -25,6 +26,7 @@ class TasksListPanel extends StatefulWidget {
     this.onTasksUpdated,
     this.onTaskCreated,
     this.isMobile = false,
+    this.isCreating = false,
   }) : super(key: key);
 
   @override
@@ -181,9 +183,7 @@ class _TasksListPanelState extends State<TasksListPanel> {
     final isTaskSelected =
         widget.selectedTaskId != null && widget.selectedTaskId!.isNotEmpty;
     final filteredTasks = _getFilteredAndSortedTasks();
-
-    // Если это мобильное устройство ИЛИ задача выбрана (панель свернута) - узкий режим
-    final isNarrowMode = widget.isMobile || isTaskSelected;
+    final isNarrowMode = widget.isMobile || isTaskSelected || widget.isCreating;
 
     if (isNarrowMode) {
       return _buildNarrowLayout(context, isTaskSelected, filteredTasks);

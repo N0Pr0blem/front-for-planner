@@ -582,6 +582,7 @@ class _TasksPageState extends State<TasksPage> {
                           onAddTask: _startCreating,
                           tasks: _tasks,
                           onTasksUpdated: _refreshTasks,
+                          isCreating: _isCreating
                         ),
                       )
                     : Expanded(
@@ -592,6 +593,7 @@ class _TasksPageState extends State<TasksPage> {
                           onAddTask: _startCreating,
                           tasks: _tasks,
                           onTasksUpdated: _refreshTasks,
+                          isCreating: _isCreating
                         ),
                       )
               else
