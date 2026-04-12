@@ -3,6 +3,7 @@ import 'dart:io';
 import 'dart:typed_data';
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
+import 'package:it_planner/dto/tracking/user_tracking_response.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:permission_handler/permission_handler.dart';
 import '../dto/task/task_response.dart';
@@ -18,45 +19,46 @@ class TaskService {
   static const String baseUrl = 'http://192.168.0.103:8080';
 
   static Future<List<TaskResponse>> getTasks(int projectId) async {
-  final token = await TokenStorage.getToken();
-  if (token == null) {
-    throw Exception('No auth token');
+    final token = await TokenStorage.getToken();
+    if (token == null) {
+      throw Exception('No auth token');
+    }
+
+    final url = Uri.parse('$baseUrl/api/v1/project/$projectId/browse');
+
+    final response = await http.get(
+      url,
+      headers: {
+        'Authorization': 'Bearer $token',
+        'Content-Type': 'application/json',
+      },
+    );
+
+    if (response.statusCode == 200) {
+      final dynamic jsonData = jsonDecode(response.body);
+
+      // Проверяем, если ответ null или не является списком
+      if (jsonData == null) {
+        return []; // Возвращаем пустой список вместо исключения
+      }
+
+      if (jsonData is! List) {
+        throw Exception(
+            'Invalid response format: expected array but got ${jsonData.runtimeType}');
+      }
+
+      final List<dynamic> jsonList = jsonData;
+      return jsonList
+          .map((item) => TaskResponse.fromJson(item as Map<String, dynamic>))
+          .toList();
+    } else {
+      // Можно обработать разные статусы, если нужно
+      if (response.statusCode == 404) {
+        return []; // Проект не найден или нет задач
+      }
+      throw Exception('Failed to load tasks: ${response.statusCode}');
+    }
   }
-
-  final url = Uri.parse('$baseUrl/api/v1/project/$projectId/browse');
-
-  final response = await http.get(
-    url,
-    headers: {
-      'Authorization': 'Bearer $token',
-      'Content-Type': 'application/json',
-    },
-  );
-
-  if (response.statusCode == 200) {
-    final dynamic jsonData = jsonDecode(response.body);
-    
-    // Проверяем, если ответ null или не является списком
-    if (jsonData == null) {
-      return []; // Возвращаем пустой список вместо исключения
-    }
-    
-    if (jsonData is! List) {
-      throw Exception('Invalid response format: expected array but got ${jsonData.runtimeType}');
-    }
-    
-    final List<dynamic> jsonList = jsonData;
-    return jsonList
-        .map((item) => TaskResponse.fromJson(item as Map<String, dynamic>))
-        .toList();
-  } else {
-    // Можно обработать разные статусы, если нужно
-    if (response.statusCode == 404) {
-      return []; // Проект не найден или нет задач
-    }
-    throw Exception('Failed to load tasks: ${response.statusCode}');
-  }
-}
 
   static Future<TaskDetailResponse> getTaskDetails(int taskId) async {
     final token = await TokenStorage.getToken();
@@ -278,7 +280,7 @@ class TaskService {
     if (token == null) {
       throw Exception('No auth token');
     }
-    
+
     final response = await http.get(
       Uri.parse('$baseUrl/api/v1/task/my'),
       headers: {
@@ -415,29 +417,53 @@ class TaskService {
   }
 
   static Future<void> assignTask({
-  required int projectId,
-  required int taskId,
-  required int employeeId,
-}) async {
-  final token = await TokenStorage.getToken();
-  if (token == null) {
-    throw Exception('Token not found');
+    required int projectId,
+    required int taskId,
+    required int employeeId,
+  }) async {
+    final token = await TokenStorage.getToken();
+    if (token == null) {
+      throw Exception('Token not found');
+    }
+
+    final url = Uri.parse(
+        '$baseUrl/api/v1/project/$projectId/task/$taskId/employee/$employeeId');
+
+    final response = await http.patch(
+      url,
+      headers: {
+        'Authorization': 'Bearer $token',
+        'Content-Type': 'application/json',
+      },
+    );
+
+    if (response.statusCode != 200) {
+      throw Exception(
+          'Failed to assign task: ${response.statusCode} ${response.body}');
+    }
   }
+// Добавьте этот метод в lib/service/task_service.dart
 
-  final url = Uri.parse('$baseUrl/api/v1/project/$projectId/task/$taskId/employee/$employeeId');
-  
-  final response = await http.patch(
-    url,
-    headers: {
-      'Authorization': 'Bearer $token',
-      'Content-Type': 'application/json',
-    },
-  );
+  static Future<UserTrackingResponse> getUserTracking() async {
+    final token = await TokenStorage.getToken();
+    if (token == null) {
+      throw Exception('No auth token');
+    }
 
-  if (response.statusCode != 200) {
-    throw Exception('Failed to assign task: ${response.statusCode} ${response.body}');
+    final url = Uri.parse('$baseUrl/api/v1/profile/tracking');
+
+    final response = await http.get(
+      url,
+      headers: {
+        'Authorization': 'Bearer $token',
+        'Content-Type': 'application/json',
+      },
+    );
+
+    if (response.statusCode == 200) {
+      return UserTrackingResponse.fromJson(jsonDecode(response.body));
+    } else {
+      throw Exception('Failed to load user tracking: ${response.statusCode}');
+    }
   }
 }
-
-}
-

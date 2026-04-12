@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:it_planner/widgets/ai_chat_dialog.dart';
 import '../widgets/app_header.dart';
 import '../widgets/navigation_panel.dart';
 import '../widgets/tasks_list_panel.dart';
@@ -48,6 +49,15 @@ class _TasksPageState extends State<TasksPage> {
       context,
       '/members',
       arguments: _selectedProject,
+    );
+  }
+
+  void _showAIChatDialog() {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return const AIChatDialog();
+      },
     );
   }
 
@@ -405,40 +415,53 @@ class _TasksPageState extends State<TasksPage> {
         backgroundColor: Colors.white,
         title: Text(
           _selectedProject?.name ?? 'Fern.com',
-          style: const TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.w600,
-          ),
+          style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
         ),
         centerTitle: true,
         elevation: 2,
         actions: [
-          // Кнопка смены проекта на мобильном
           IconButton(
             icon: const Icon(Icons.swap_horiz),
             onPressed: _showMobileProjectSelector,
           ),
         ],
       ),
-      body: _isTaskSelected && (_isCreating || _currentTaskDetails != null)
-          ? _getMobileDetailPanel()
-          : RefreshIndicator(
-              onRefresh: _refreshTasks,
-              child: TasksListPanel(
-                projectId: _selectedProject!.id,
-                selectedTaskId: _selectedTaskId,
-                onTaskSelected: _selectTask,
-                onAddTask: _startCreating,
-                tasks: _tasks,
-                onTasksUpdated: _refreshTasks,
-              ),
+      body: Stack(
+        children: [
+          _isTaskSelected && (_isCreating || _currentTaskDetails != null)
+              ? _getMobileDetailPanel()
+              : RefreshIndicator(
+                  onRefresh: _refreshTasks,
+                  child: TasksListPanel(
+                    projectId: _selectedProject!.id,
+                    selectedTaskId: _selectedTaskId,
+                    onTaskSelected: _selectTask,
+                    onAddTask: _startCreating,
+                    tasks: _tasks,
+                    onTasksUpdated: _refreshTasks,
+                  ),
+                ),
+          // Кнопка "Спросить ИИ"
+          Positioned(
+            bottom: 80,
+            right: 16,
+            child: FloatingActionButton(
+              backgroundColor: AppColors.primary,
+              onPressed: _showAIChatDialog,
+              child: const Icon(Icons.auto_awesome, color: Colors.white),
+              tooltip: 'Спросить ИИ',
+              heroTag: 'ai_fab',
             ),
+          ),
+        ],
+      ),
       floatingActionButton: _isTaskSelected
           ? null
           : FloatingActionButton(
               backgroundColor: AppColors.primary,
               onPressed: _startCreating,
               child: const Icon(Icons.add, color: Colors.white),
+              heroTag: 'add_task_fab',
             ),
       bottomNavigationBar: MobileBottomNavBar(
         onTasksTap: () {},
@@ -520,95 +543,95 @@ class _TasksPageState extends State<TasksPage> {
   }
 
   Widget _buildDesktopLayout() {
-    return Scaffold(
-      backgroundColor: AppColors.background,
-      body: Column(
-        children: [
-          // Хедер
-          AppHeader(
-            onProjectSelected: _onProjectSelected,
-            initialProject: _selectedProject,
-          ),
-          // Основной контент
-          Expanded(
-            child: Row(
-              children: [
-                // 1. Навигационная панель
-                SizedBox(
-                  width: 100,
-                  child: NavigationPanel(
-                    isTasksActive: true,
-                    isMembersActive: false,
-                    isRepositoryActive: false,
-                    onTasksTap: () {},
-                    onMembersTap: _navigateToMembers,
-                    onRepositoryTap: _navigateToRepository,
+  return Scaffold(
+    backgroundColor: AppColors.background,
+    floatingActionButton: FloatingActionButton(
+      backgroundColor: AppColors.primary,
+      onPressed: _showAIChatDialog,
+      child: const Icon(Icons.auto_awesome, color: Colors.white),
+      tooltip: 'Спросить ИИ',
+    ),
+    body: Column(
+      children: [
+        AppHeader(
+          onProjectSelected: _onProjectSelected,
+          initialProject: _selectedProject,
+        ),
+        Expanded(
+          child: Row(
+            children: [
+              SizedBox(
+                width: 100,
+                child: NavigationPanel(
+                  isTasksActive: true,
+                  isMembersActive: false,
+                  isRepositoryActive: false,
+                  onTasksTap: () {},
+                  onMembersTap: _navigateToMembers,
+                  onRepositoryTap: _navigateToRepository,
+                ),
+              ),
+              if (_selectedProject != null)
+                _isTaskSelected
+                    ? SizedBox(
+                        width: 250,
+                        child: TasksListPanel(
+                          projectId: _selectedProject!.id,
+                          selectedTaskId: _selectedTaskId,
+                          onTaskSelected: _selectTask,
+                          onAddTask: _startCreating,
+                          tasks: _tasks,
+                          onTasksUpdated: _refreshTasks,
+                        ),
+                      )
+                    : Expanded(
+                        child: TasksListPanel(
+                          projectId: _selectedProject!.id,
+                          selectedTaskId: _selectedTaskId,
+                          onTaskSelected: _selectTask,
+                          onAddTask: _startCreating,
+                          tasks: _tasks,
+                          onTasksUpdated: _refreshTasks,
+                        ),
+                      )
+              else
+                const Expanded(
+                  child: Center(
+                    child: Text('Нет существующих проектов. Создайте чтобы начать работу'),
                   ),
                 ),
-                // 2. Список задач
-                if (_selectedProject != null)
-                  _isTaskSelected
-                      ? SizedBox(
-                          width: 250,
-                          child: TasksListPanel(
-                            projectId: _selectedProject!.id,
-                            selectedTaskId: _selectedTaskId,
-                            onTaskSelected: _selectTask,
-                            onAddTask: _startCreating,
-                            tasks: _tasks,
-                            onTasksUpdated: _refreshTasks,
-                          ),
-                        )
-                      : Expanded(
-                          child: TasksListPanel(
-                            projectId: _selectedProject!.id,
-                            selectedTaskId: _selectedTaskId,
-                            onTaskSelected: _selectTask,
-                            onAddTask: _startCreating,
-                            tasks: _tasks,
-                            onTasksUpdated: _refreshTasks,
-                          ),
-                        )
-                else
-                  const Expanded(
-                    child: Center(
-                      child: Text('Нет существующих проектов. Создайте чтобы начать работу'),
-                    ),
+              if (_isTaskSelected)
+                Expanded(
+                  child: Container(
+                    color: AppColors.background,
+                    padding: const EdgeInsets.only(top: 25, bottom: 25),
+                    child: _getDetailPanel(),
                   ),
-                // 3. Детали задачи
-                if (_isTaskSelected)
-                  Expanded(
-                    child: Container(
-                      color: AppColors.background,
-                      padding: const EdgeInsets.only(top: 25, bottom: 25),
-                      child: _getDetailPanel(),
-                    ),
+                ),
+              if (_isTaskSelected &&
+                  (_currentTaskDetails != null || _isCreating))
+                SizedBox(
+                  width: 250,
+                  child: TaskInfoPanel(
+                    task: _isCreating
+                        ? (_currentUser != null
+                            ? TaskDetailResponse.empty(
+                                projectId: _selectedProject!.id,
+                                currentUser: _currentUser!,
+                              )
+                            : null)
+                        : _currentTaskDetails,
+                    trekking: _isCreating ? _emptyTrekking : _currentTrekking,
+                    onTaskUpdated: _handleTaskAssigned,
                   ),
-                // 4. TaskInfoPanel (показываем всегда когда есть выбранная задача ИЛИ создаем новую)
-                if (_isTaskSelected &&
-                    (_currentTaskDetails != null || _isCreating))
-                  SizedBox(
-                    width: 250,
-                    child: TaskInfoPanel(
-                      task: _isCreating
-                          ? (_currentUser != null
-                              ? TaskDetailResponse.empty(
-                                  projectId: _selectedProject!.id,
-                                  currentUser: _currentUser!,
-                                )
-                              : null)
-                          : _currentTaskDetails,
-                      trekking: _isCreating ? _emptyTrekking : _currentTrekking,
-                      onTaskUpdated: _handleTaskAssigned,
-                    ),
-                  ),
-              ],
-            ),
+                ),
+            ],
           ),
-        ],
-      ),
-    );
-  }
+        ),
+      ],
+    ),
+  );
+}
 
   Widget _getDetailPanel() {
     if (_isCreating) {
