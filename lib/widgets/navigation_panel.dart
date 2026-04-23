@@ -8,6 +8,9 @@ class NavigationPanel extends StatelessWidget {
   final bool isTasksActive;
   final bool isMembersActive;
   final bool isRepositoryActive;
+  final bool showArchive; // Новый параметр
+  final bool isArchiveActive; // Новый параметр
+  final VoidCallback? onArchiveTap; // Новый параметр
 
   const NavigationPanel({
     Key? key,
@@ -17,6 +20,9 @@ class NavigationPanel extends StatelessWidget {
     required this.isTasksActive,
     required this.isMembersActive,
     required this.isRepositoryActive,
+    this.showArchive = false,
+    this.isArchiveActive = false,
+    this.onArchiveTap,
   }) : super(key: key);
 
   @override
@@ -26,41 +32,39 @@ class NavigationPanel extends StatelessWidget {
       child: Column(
         children: [
           const SizedBox(height: 20, width: 20),
-          
-          // Кнопка задач
           _NavigationButton(
             icon: Icons.task,
             label: 'Задачи',
             isActive: isTasksActive,
             onTap: onTasksTap,
           ),
-          
-          // Кнопка участников
+          if (showArchive) ...[
+            _NavigationButton(
+              icon: Icons.archive,
+              label: 'Архив',
+              isActive: isArchiveActive,
+              onTap: onArchiveTap ?? () {},
+            ),
+          ],
           _NavigationButton(
             icon: Icons.people,
             label: 'Участники',
             isActive: isMembersActive,
             onTap: onMembersTap,
           ),
-          
-          // Кнопка репозитория
           _NavigationButton(
             icon: Icons.folder,
             label: 'Файлы',
             isActive: isRepositoryActive,
             onTap: onRepositoryTap,
           ),
-          
           const Spacer(),
-          
-          // Кнопка настроек
           _NavigationButton(
             icon: Icons.settings,
             label: 'Настройки',
             isActive: false,
             onTap: () {},
           ),
-          
           const SizedBox(height: 20, width: 20),
         ],
       ),
@@ -89,7 +93,8 @@ class _NavigationButton extends StatelessWidget {
       height: 70,
       width: 70,
       decoration: BoxDecoration(
-        color: isActive ? AppColors.primary.withOpacity(0.5) : Colors.transparent,
+        color:
+            isActive ? AppColors.primary.withOpacity(0.5) : Colors.transparent,
         borderRadius: BorderRadius.circular(12),
       ),
       child: Material(
@@ -105,7 +110,8 @@ class _NavigationButton extends StatelessWidget {
               children: [
                 Icon(
                   icon,
-                  color: isActive ? AppColors.textOnPrimary : AppColors.textHint,
+                  color:
+                      isActive ? AppColors.textOnPrimary : AppColors.textHint,
                   size: 24,
                 ),
                 const SizedBox(height: 4),
@@ -113,7 +119,8 @@ class _NavigationButton extends StatelessWidget {
                   label,
                   style: TextStyle(
                     fontSize: 10,
-                    color: isActive ? AppColors.textOnPrimary : AppColors.textHint,
+                    color:
+                        isActive ? AppColors.textOnPrimary : AppColors.textHint,
                     fontWeight: isActive ? FontWeight.bold : FontWeight.normal,
                   ),
                 ),

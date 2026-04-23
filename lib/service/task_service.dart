@@ -3,6 +3,7 @@ import 'dart:io';
 import 'dart:typed_data';
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
+import 'package:it_planner/dto/task/task_listing_response.dart';
 import 'package:it_planner/dto/tracking/user_tracking_response.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:permission_handler/permission_handler.dart';
@@ -18,13 +19,23 @@ import 'file_download_service.dart';
 class TaskService {
   static const String baseUrl = 'http://192.168.0.103:8080';
 
-  static Future<List<TaskResponse>> getTasks(int projectId) async {
+  static Future<TaskListingResponse> getTasksPaginated({
+    required int projectId,
+    int page = 0,
+    int size = 10,
+    bool archived = false,
+  }) async {
     final token = await TokenStorage.getToken();
     if (token == null) {
       throw Exception('No auth token');
     }
 
-    final url = Uri.parse('$baseUrl/api/v1/project/$projectId/browse');
+    final url = Uri.parse('$baseUrl/api/v1/project/$projectId/browse')
+        .replace(queryParameters: {
+      'page': page.toString(),
+      'size': size.toString(),
+      'archive': archived.toString(),
+    });
 
     final response = await http.get(
       url,
@@ -35,28 +46,80 @@ class TaskService {
     );
 
     if (response.statusCode == 200) {
-      final dynamic jsonData = jsonDecode(response.body);
-
-      // Проверяем, если ответ null или не является списком
-      if (jsonData == null) {
-        return []; // Возвращаем пустой список вместо исключения
-      }
-
-      if (jsonData is! List) {
-        throw Exception(
-            'Invalid response format: expected array but got ${jsonData.runtimeType}');
-      }
-
-      final List<dynamic> jsonList = jsonData;
-      return jsonList
-          .map((item) => TaskResponse.fromJson(item as Map<String, dynamic>))
-          .toList();
+      final jsonData = jsonDecode(response.body);
+      return TaskListingResponse.fromJson(jsonData);
     } else {
-      // Можно обработать разные статусы, если нужно
       if (response.statusCode == 404) {
-        return []; // Проект не найден или нет задач
+        return TaskListingResponse(
+          tasks: [],
+          pages: 0,
+          size: size,
+          archived: archived,
+          pageNumber: page,
+        );
       }
       throw Exception('Failed to load tasks: ${response.statusCode}');
+    }
+  }
+
+// Оставляем старый метод для обратной совместимости
+  static Future<List<TaskResponse>> getTasks(int projectId) async {
+    final listing = await getTasksPaginated(
+      projectId: projectId,
+      page: 0,
+      size: 1000, // Большой размер чтобы получить все
+      archived: false,
+    );
+    return listing.tasks;
+  }
+
+// Метод для архивации задачи
+  static Future<void> archiveTask(int taskId) async {
+    final token = await TokenStorage.getToken();
+    if (token == null) {
+      throw Exception('No auth token');
+    }
+
+    final url = Uri.parse('$baseUrl/api/v1/task/$taskId');
+
+    final response = await http.put(
+      url,
+      headers: {
+        'Authorization': 'Bearer $token',
+        'Content-Type': 'application/json',
+      },
+      body: jsonEncode({
+        'archived': true,
+      }),
+    );
+
+    if (response.statusCode != 200) {
+      throw Exception('Failed to archive task: ${response.statusCode}');
+    }
+  }
+
+// Метод для восстановления из архива
+  static Future<void> restoreTask(int taskId) async {
+    final token = await TokenStorage.getToken();
+    if (token == null) {
+      throw Exception('No auth token');
+    }
+
+    final url = Uri.parse('$baseUrl/api/v1/task/$taskId');
+
+    final response = await http.put(
+      url,
+      headers: {
+        'Authorization': 'Bearer $token',
+        'Content-Type': 'application/json',
+      },
+      body: jsonEncode({
+        'archived': false,
+      }),
+    );
+
+    if (response.statusCode != 200) {
+      throw Exception('Failed to restore task: ${response.statusCode}');
     }
   }
 
@@ -464,6 +527,59 @@ class TaskService {
       return UserTrackingResponse.fromJson(jsonDecode(response.body));
     } else {
       throw Exception('Failed to load user tracking: ${response.statusCode}');
+    }
+  }
+
+  // lib/service/task_service.dart
+
+// Новый метод для массовой архивации
+  static Future<void> archiveTasksBulk(List<int> taskIds) async {
+    final token = await TokenStorage.getToken();
+    if (token == null) {
+      throw Exception('No auth token');
+    }
+
+    final url = Uri.parse('$baseUrl/api/v1/task/archive');
+
+    final response = await http.post(
+      url,
+      headers: {
+        'Authorization': 'Bearer $token',
+        'Content-Type': 'application/json',
+      },
+      body: jsonEncode({
+        'ids': taskIds,
+        'archive': true,
+      }),
+    );
+
+    if (response.statusCode != 200) {
+      throw Exception('Failed to archive tasks: ${response.statusCode}');
+    }
+  }
+
+// Новый метод для массового удаления
+  static Future<void> deleteTasksBulk(List<int> taskIds) async {
+    final token = await TokenStorage.getToken();
+    if (token == null) {
+      throw Exception('No auth token');
+    }
+
+    final url = Uri.parse('$baseUrl/api/v1/task/delete');
+
+    final response = await http.post(
+      url,
+      headers: {
+        'Authorization': 'Bearer $token',
+        'Content-Type': 'application/json',
+      },
+      body: jsonEncode({
+        'ids': taskIds,
+      }),
+    );
+
+    if (response.statusCode != 200) {
+      throw Exception('Failed to delete tasks: ${response.statusCode}');
     }
   }
 }

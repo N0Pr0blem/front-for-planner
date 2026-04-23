@@ -1,6 +1,7 @@
 // lib/screen/profile/profile_page.dart
 import 'package:flutter/material.dart';
 import 'package:it_planner/dto/tracking/user_tracking_response.dart';
+import 'package:it_planner/screen/profile/widgets/pricing_section.dart';
 import 'package:it_planner/screen/profile/widgets/tracking_section.dart';
 import '../../widgets/mobile_bottom_nav_bar.dart';
 import '../../dto/user/user_response.dart';
@@ -201,8 +202,10 @@ class _ProfilePageState extends State<ProfilePage> {
         onMembersTap: () => Navigator.pushReplacementNamed(context, '/members'),
         onRepositoryTap: () =>
             Navigator.pushReplacementNamed(context, '/repository'),
+        onArchiveTap: () => Navigator.pushReplacementNamed(context, '/archive'),
         onProfileTap: () {},
         onSettingsTap: () => Navigator.pushNamed(context, '/settings'),
+        isArchiveActive: false,
         isTasksActive: false,
         isMembersActive: false,
         isRepositoryActive: false,
@@ -249,6 +252,11 @@ class _ProfilePageState extends State<ProfilePage> {
                   onTap: () => setState(() => _activeSection = 'tracking'),
                 ),
                 MobileTabButton(
+                  label: 'Тарифы', // ← НОВАЯ ВКЛАДКА
+                  isActive: _activeSection == 'pricing',
+                  onTap: () => setState(() => _activeSection = 'pricing'),
+                ),
+                MobileTabButton(
                   label: 'Ответы ИИ',
                   isActive: _activeSection == 'ai',
                   onTap: () => setState(() => _activeSection = 'ai'),
@@ -286,6 +294,12 @@ class _ProfilePageState extends State<ProfilePage> {
           onCreateProject: _showCreateProjectDialog,
           onDeleteProject: _deleteProject,
         );
+      case 'pricing': // ← НОВЫЙ CASE
+        return PricingSection(
+          currentPlan: 'basic', // Пока моковые данные
+          aiRequestsUsed: 2,
+          aiRequestsLimit: 3,
+        );
       case 'tasks':
         return TasksSection(tasks: _myTasks);
       case 'tracking': // ВОТ ЭТОГО НЕ ХВАТАЛО!
@@ -299,18 +313,22 @@ class _ProfilePageState extends State<ProfilePage> {
     }
   }
 
+// В ProfilePage, в _buildDesktopLayout:
   Widget _buildDesktopLayout() {
+    print('=== _buildDesktopLayout, activeSection: $_activeSection ===');
+
     return Scaffold(
       backgroundColor: AppColors.background,
       body: Row(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          // Левая навигационная панель
+          // Левая навигация
           SizedBox(
             width: 280,
             child: DesktopNavigation(
               activeSection: _activeSection,
               onSectionChanged: (section) {
+                print('=== onSectionChanged: $section ===');
                 setState(() {
                   _activeSection = section;
                 });
@@ -319,15 +337,12 @@ class _ProfilePageState extends State<ProfilePage> {
               onLogout: _logout,
             ),
           ),
-          // Правая часть - занимает всё оставшееся пространство
+          // Правая часть - ВАЖНО: используем Expanded
           Expanded(
             child: _isLoading
                 ? const Center(child: CircularProgressIndicator())
                 : _user != null
-                    ? Padding(
-                        padding: const EdgeInsets.all(32),
-                        child: _buildSectionContent(),
-                      )
+                    ? _buildSectionContent() // ПРЯМОЙ ВЫЗОВ без лишних оберток
                     : const Center(child: Text('Профиль не загружен')),
           ),
         ],

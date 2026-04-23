@@ -1,3 +1,4 @@
+import 'package:it_planner/screen/archive/archive_tasks_page.dart';
 import 'package:it_planner/screen/landing_page.dart';
 import 'package:it_planner/screen/members_page.dart';
 import 'package:it_planner/screen/profile/profile_page.dart';
@@ -38,6 +39,11 @@ class MyApp extends StatelessWidget {
             final args = settings.arguments as ProjectResponse?;
             return MaterialPageRoute(
               builder: (context) => TasksPage(initialProject: args),
+            );
+            case '/archive': // ← ДОБАВИТЬ НОВЫЙ CASE
+            final args = settings.arguments as ProjectResponse?;
+            return MaterialPageRoute(
+              builder: (context) => ArchiveTasksPage(initialProject: args),
             );
           case '/members':
             final args = settings.arguments as ProjectResponse?;

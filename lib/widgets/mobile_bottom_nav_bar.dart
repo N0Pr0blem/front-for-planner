@@ -5,22 +5,26 @@ class MobileBottomNavBar extends StatelessWidget {
   final VoidCallback onTasksTap;
   final VoidCallback onMembersTap;
   final VoidCallback onRepositoryTap;
+  final VoidCallback onArchiveTap;
   final VoidCallback onProfileTap;
   final VoidCallback onSettingsTap;
   final bool isTasksActive;
   final bool isMembersActive;
   final bool isRepositoryActive;
+  final bool isArchiveActive;
 
   const MobileBottomNavBar({
     Key? key,
     required this.onTasksTap,
     required this.onMembersTap,
     required this.onRepositoryTap,
+    required this.onArchiveTap,
     required this.onProfileTap,
     required this.onSettingsTap,
     required this.isTasksActive,
     required this.isMembersActive,
     required this.isRepositoryActive,
+    this.isArchiveActive = false,
   }) : super(key: key);
 
   @override
@@ -57,6 +61,12 @@ class MobileBottomNavBar extends StatelessWidget {
               onTap: onTasksTap,
             ),
             _NavIconButton(
+              icon: Icons.archive,
+              label: 'Архив',
+              isActive: isArchiveActive,
+              onTap: onArchiveTap,
+            ),
+            _NavIconButton(
               icon: Icons.people,
               label: 'Участники',
               isActive: isMembersActive,
@@ -68,17 +78,46 @@ class MobileBottomNavBar extends StatelessWidget {
               isActive: isRepositoryActive,
               onTap: onRepositoryTap,
             ),
-            _NavIconButton(
-              icon: Icons.person,
-              label: 'Профиль',
-              isActive: false,
-              onTap: onProfileTap,
-            ),
-            _NavIconButton(
-              icon: Icons.settings,
-              label: 'Настройки',
-              isActive: false,
-              onTap: onSettingsTap,
+            // Меню с дополнительными опциями
+            PopupMenuButton<String>(
+              icon: Icon(
+                Icons.more_horiz,
+                color: AppColors.textHint,
+                size: 24,
+              ),
+              offset: const Offset(0, -50),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+              onSelected: (value) {
+                if (value == 'profile') {
+                  onProfileTap();
+                } else if (value == 'settings') {
+                  onSettingsTap();
+                }
+              },
+              itemBuilder: (context) => [
+                const PopupMenuItem(
+                  value: 'profile',
+                  child: Row(
+                    children: [
+                      Icon(Icons.person, size: 20),
+                      SizedBox(width: 12),
+                      Text('Профиль'),
+                    ],
+                  ),
+                ),
+                const PopupMenuItem(
+                  value: 'settings',
+                  child: Row(
+                    children: [
+                      Icon(Icons.settings, size: 20),
+                      SizedBox(width: 12),
+                      Text('Настройки'),
+                    ],
+                  ),
+                ),
+              ],
             ),
           ],
         ),
@@ -115,7 +154,7 @@ class _NavIconButton extends StatelessWidget {
               children: [
                 Icon(
                   icon,
-                  size: 24,
+                  size: 22, // Чуть уменьшил размер
                   color: isActive 
                     ? AppColors.primary 
                     : AppColors.textHint,
@@ -124,7 +163,7 @@ class _NavIconButton extends StatelessWidget {
                 Text(
                   label,
                   style: TextStyle(
-                    fontSize: 10,
+                    fontSize: 9, // Уменьшил шрифт чтобы поместилось
                     color: isActive 
                       ? AppColors.primary 
                       : AppColors.textHint,

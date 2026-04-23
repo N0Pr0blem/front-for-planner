@@ -61,7 +61,7 @@ Widget build(BuildContext context) {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     const Text(
-                      'Мои проекты',
+                      'Созданные мной проекты',
                       style: TextStyle(
                         fontSize: 24,
                         fontWeight: FontWeight.bold,

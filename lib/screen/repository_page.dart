@@ -36,6 +36,14 @@ class _RepositoryPageState extends State<RepositoryPage> {
     }
   }
 
+  void _navigateToArchive() {
+    Navigator.pushReplacementNamed(
+      context,
+      '/archive',
+      arguments: _selectedProject,
+    );
+  }
+
   Future<void> _loadProjects() async {
     try {
       final projects = await ProjectService().getProjects();
@@ -154,91 +162,93 @@ class _RepositoryPageState extends State<RepositoryPage> {
 
   void _navigateToRepository() {}
 
-void _showMobileProjectSelector() {
-  showModalBottomSheet(
-    context: context,
-    shape: const RoundedRectangleBorder(
-      borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
-    ),
-    builder: (context) {
-      return _buildMobileProjectList();
-    },
-  );
-}
+  void _showMobileProjectSelector() {
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      builder: (context) {
+        return _buildMobileProjectList();
+      },
+    );
+  }
 
-Widget _buildMobileProjectList() {
-  return FutureBuilder<List<ProjectResponse>>(
-    future: ProjectService().getProjects(),
-    builder: (context, snapshot) {
-      if (snapshot.connectionState == ConnectionState.waiting) {
-        return const Padding(
-          padding: EdgeInsets.all(20),
-          child: Center(child: CircularProgressIndicator()),
-        );
-      }
-      if (!snapshot.hasData || snapshot.data!.isEmpty) {
-        return Padding(
-          padding: const EdgeInsets.all(20),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(Icons.error_outline, color: AppColors.textError, size: 48),
-              const SizedBox(height: 16),
-              Text('Нет проектов', style: TextStyle(color: AppColors.textError)),
-            ],
-          ),
-        );
-      }
+  Widget _buildMobileProjectList() {
+    return FutureBuilder<List<ProjectResponse>>(
+      future: ProjectService().getProjects(),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Padding(
+            padding: EdgeInsets.all(20),
+            child: Center(child: CircularProgressIndicator()),
+          );
+        }
+        if (!snapshot.hasData || snapshot.data!.isEmpty) {
+          return Padding(
+            padding: const EdgeInsets.all(20),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(Icons.error_outline, color: AppColors.textError, size: 48),
+                const SizedBox(height: 16),
+                Text('Нет проектов',
+                    style: TextStyle(color: AppColors.textError)),
+              ],
+            ),
+          );
+        }
 
-      final projects = snapshot.data!;
-      return Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Padding(
-            padding: const EdgeInsets.all(16),
-            child: Text(
-              'Выберите проект',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-            ),
-          ),
-          Expanded(
-            child: ListView.builder(
-              itemCount: projects.length,
-              itemBuilder: (context, index) {
-                final project = projects[index];
-                final isSelected = project.id == _selectedProject?.id;
-                return ListTile(
-                  leading: Icon(
-                    Icons.folder,
-                    color: isSelected ? AppColors.primary : AppColors.textHint,
-                  ),
-                  title: Text(project.name),
-                  trailing: isSelected
-                      ? Icon(Icons.check, color: AppColors.primary)
-                      : null,
-                  onTap: () {
-                    _onProjectSelected(project);
-                    Navigator.pop(context);
-                  },
-                );
-              },
-            ),
-          ),
-          Padding(
-            padding: const EdgeInsets.all(16),
-            child: SizedBox(
-              width: double.infinity,
-              child: OutlinedButton(
-                onPressed: () => Navigator.pop(context),
-                child: const Text('Отмена'),
+        final projects = snapshot.data!;
+        return Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Padding(
+              padding: const EdgeInsets.all(16),
+              child: Text(
+                'Выберите проект',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
               ),
             ),
-          ),
-        ],
-      );
-    },
-  );
-}
+            Expanded(
+              child: ListView.builder(
+                itemCount: projects.length,
+                itemBuilder: (context, index) {
+                  final project = projects[index];
+                  final isSelected = project.id == _selectedProject?.id;
+                  return ListTile(
+                    leading: Icon(
+                      Icons.folder,
+                      color:
+                          isSelected ? AppColors.primary : AppColors.textHint,
+                    ),
+                    title: Text(project.name),
+                    trailing: isSelected
+                        ? Icon(Icons.check, color: AppColors.primary)
+                        : null,
+                    onTap: () {
+                      _onProjectSelected(project);
+                      Navigator.pop(context);
+                    },
+                  );
+                },
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.all(16),
+              child: SizedBox(
+                width: double.infinity,
+                child: OutlinedButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: const Text('Отмена'),
+                ),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -252,83 +262,86 @@ Widget _buildMobileProjectList() {
   }
 
   Widget _buildMobileLayout() {
-  return Scaffold(
-    backgroundColor: AppColors.background,
-    appBar: AppBar(
-      backgroundColor: Colors.white,
-      title: Text(_selectedProject?.name ?? 'Репозиторий'),
-      centerTitle: true,
-      elevation: 2,
-      actions: [
-        // Кнопка смены проекта
-        IconButton(
-          icon: const Icon(Icons.swap_horiz),
-          onPressed: _showMobileProjectSelector,
-        ),
-      ],
-    ),
-   body: Padding(
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        children: [
-          // Поле поиска
-          Container(
-            height: 44,
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(12),
-              boxShadow: const [
-                BoxShadow(
-                  color: AppColors.shadowLight,
-                  offset: Offset(0, 2),
-                  blurRadius: 6,
-                  spreadRadius: -2,
-                ),
-              ],
-            ),
-            child: TextField(
-              controller: _searchController,
-              decoration: InputDecoration(
-                hintText: 'Поиск файлов...',
-                hintStyle: const TextStyle(color: AppColors.textHint),
-                border: InputBorder.none,
-                contentPadding: const EdgeInsets.symmetric(horizontal: 16),
-                prefixIcon: Icon(
-                  Icons.search,
-                  color: AppColors.textHint,
-                  size: 20,
-                ),
-              ),
-              style: const TextStyle(fontSize: 14),
-              onChanged: (value) {
-                // можно добавить фильтрацию
-              },
-            ),
-          ),
-          const SizedBox(height: 16),
-          Expanded(
-            child: _buildContent(),
+    return Scaffold(
+      backgroundColor: AppColors.background,
+      appBar: AppBar(
+        backgroundColor: Colors.white,
+        title: Text(_selectedProject?.name ?? 'Репозиторий'),
+        centerTitle: true,
+        elevation: 2,
+        actions: [
+          // Кнопка смены проекта
+          IconButton(
+            icon: const Icon(Icons.swap_horiz),
+            onPressed: _showMobileProjectSelector,
           ),
         ],
       ),
-    ),
-    bottomNavigationBar: MobileBottomNavBar(
-      onTasksTap: _navigateToTasks,
-      onMembersTap: _navigateToMembers,
-      onRepositoryTap: () {}, // текущая страница
-      onProfileTap: () => Navigator.pushNamed(context, '/profile'),
-      onSettingsTap: () => Navigator.pushNamed(context, '/settings'),
-      isTasksActive: false,
-      isMembersActive: false,
-      isRepositoryActive: true,
-    ),
-    floatingActionButton: FloatingActionButton(
-      backgroundColor: AppColors.primary,
-      onPressed: _showUploadDialog,
-      child: const Icon(Icons.add, color: Colors.white),
-    ),
-  );
-}
+      body: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          children: [
+            // Поле поиска
+            Container(
+              height: 44,
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(12),
+                boxShadow: const [
+                  BoxShadow(
+                    color: AppColors.shadowLight,
+                    offset: Offset(0, 2),
+                    blurRadius: 6,
+                    spreadRadius: -2,
+                  ),
+                ],
+              ),
+              child: TextField(
+                controller: _searchController,
+                decoration: InputDecoration(
+                  hintText: 'Поиск файлов...',
+                  hintStyle: const TextStyle(color: AppColors.textHint),
+                  border: InputBorder.none,
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 16),
+                  prefixIcon: Icon(
+                    Icons.search,
+                    color: AppColors.textHint,
+                    size: 20,
+                  ),
+                ),
+                style: const TextStyle(fontSize: 14),
+                onChanged: (value) {
+                  // можно добавить фильтрацию
+                },
+              ),
+            ),
+            const SizedBox(height: 16),
+            Expanded(
+              child: _buildContent(),
+            ),
+          ],
+        ),
+      ),
+      bottomNavigationBar: MobileBottomNavBar(
+        onTasksTap: _navigateToTasks,
+        onMembersTap: _navigateToMembers,
+        onRepositoryTap: () {}, // текущая страница
+        onProfileTap: () => Navigator.pushNamed(context, '/profile'),
+        onSettingsTap: () => Navigator.pushNamed(context, '/settings'),
+        onArchiveTap: () => Navigator.pushNamed(context, '/archive'),
+        isArchiveActive: false,
+        isTasksActive: false,
+        isMembersActive: false,
+        isRepositoryActive: true,
+      ),
+      floatingActionButton: FloatingActionButton(
+        backgroundColor: AppColors.primary,
+        onPressed: _showUploadDialog,
+        child: const Icon(Icons.add, color: Colors.white),
+      ),
+    );
+  }
+
   Widget _buildDesktopLayout() {
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -347,6 +360,9 @@ Widget _buildMobileProjectList() {
                     isTasksActive: false,
                     isMembersActive: false,
                     isRepositoryActive: true,
+                    showArchive: true, // ← ДОБАВИТЬ
+                    isArchiveActive: false,
+                    onArchiveTap: _navigateToArchive,
                     onTasksTap: _navigateToTasks,
                     onMembersTap: _navigateToMembers,
                     onRepositoryTap: _navigateToRepository,

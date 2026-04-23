@@ -44,6 +44,14 @@ class _TasksPageState extends State<TasksPage> {
     Navigator.pushNamed(context, '/settings');
   }
 
+  void _navigateToArchive() {
+    Navigator.pushReplacementNamed(
+      context,
+      '/archive',
+      arguments: _selectedProject,
+    );
+  }
+
   void _navigateToMembers() {
     Navigator.pushReplacementNamed(
       context,
@@ -202,6 +210,8 @@ class _TasksPageState extends State<TasksPage> {
     setState(() {
       _tasks.insert(0, taskResponse);
       _isCreating = false;
+      _isTaskSelected = true;
+      _selectedTaskId = createdTask.id.toString();
       _currentTaskDetails = createdTask;
     });
   }
@@ -402,8 +412,10 @@ class _TasksPageState extends State<TasksPage> {
           onRepositoryTap: _navigateToRepository,
           onProfileTap: _navigateToProfile,
           onSettingsTap: _navigateToSettings,
+          onArchiveTap: _navigateToArchive,
           isTasksActive: true,
           isMembersActive: false,
+          isArchiveActive: false,
           isRepositoryActive: false,
         ),
       );
@@ -464,15 +476,16 @@ class _TasksPageState extends State<TasksPage> {
               heroTag: 'add_task_fab',
             ),
       bottomNavigationBar: MobileBottomNavBar(
-        onTasksTap: () {},
-        onMembersTap: _navigateToMembers,
-        onRepositoryTap: _navigateToRepository,
-        onProfileTap: _navigateToProfile,
-        onSettingsTap: _navigateToSettings,
-        isTasksActive: true,
-        isMembersActive: false,
-        isRepositoryActive: false,
-      ),
+          onTasksTap: () {},
+          onMembersTap: _navigateToMembers,
+          onRepositoryTap: _navigateToRepository,
+          onProfileTap: _navigateToProfile,
+          onSettingsTap: _navigateToSettings,
+          onArchiveTap: _navigateToArchive,
+          isArchiveActive: false,
+          isTasksActive: true,
+          isMembersActive: false,
+          isRepositoryActive: false,),
     );
   }
 
@@ -543,97 +556,99 @@ class _TasksPageState extends State<TasksPage> {
   }
 
   Widget _buildDesktopLayout() {
-  return Scaffold(
-    backgroundColor: AppColors.background,
-    floatingActionButton: FloatingActionButton(
-      backgroundColor: AppColors.primary,
-      onPressed: _showAIChatDialog,
-      child: const Icon(Icons.auto_awesome, color: Colors.white),
-      tooltip: 'Спросить ИИ',
-    ),
-    body: Column(
-      children: [
-        AppHeader(
-          onProjectSelected: _onProjectSelected,
-          initialProject: _selectedProject,
-        ),
-        Expanded(
-          child: Row(
-            children: [
-              SizedBox(
-                width: 100,
-                child: NavigationPanel(
-                  isTasksActive: true,
-                  isMembersActive: false,
-                  isRepositoryActive: false,
-                  onTasksTap: () {},
-                  onMembersTap: _navigateToMembers,
-                  onRepositoryTap: _navigateToRepository,
-                ),
-              ),
-              if (_selectedProject != null)
-                _isTaskSelected
-                    ? SizedBox(
-                        width: 250,
-                        child: TasksListPanel(
-                          projectId: _selectedProject!.id,
-                          selectedTaskId: _selectedTaskId,
-                          onTaskSelected: _selectTask,
-                          onAddTask: _startCreating,
-                          tasks: _tasks,
-                          onTasksUpdated: _refreshTasks,
-                          isCreating: _isCreating
-                        ),
-                      )
-                    : Expanded(
-                        child: TasksListPanel(
-                          projectId: _selectedProject!.id,
-                          selectedTaskId: _selectedTaskId,
-                          onTaskSelected: _selectTask,
-                          onAddTask: _startCreating,
-                          tasks: _tasks,
-                          onTasksUpdated: _refreshTasks,
-                          isCreating: _isCreating
-                        ),
-                      )
-              else
-                const Expanded(
-                  child: Center(
-                    child: Text('Нет существующих проектов. Создайте чтобы начать работу'),
-                  ),
-                ),
-              if (_isTaskSelected)
-                Expanded(
-                  child: Container(
-                    color: AppColors.background,
-                    padding: const EdgeInsets.only(top: 25, bottom: 25),
-                    child: _getDetailPanel(),
-                  ),
-                ),
-              if (_isTaskSelected &&
-                  (_currentTaskDetails != null || _isCreating))
-                SizedBox(
-                  width: 250,
-                  child: TaskInfoPanel(
-                    task: _isCreating
-                        ? (_currentUser != null
-                            ? TaskDetailResponse.empty(
-                                projectId: _selectedProject!.id,
-                                currentUser: _currentUser!,
-                              )
-                            : null)
-                        : _currentTaskDetails,
-                    trekking: _isCreating ? _emptyTrekking : _currentTrekking,
-                    onTaskUpdated: _handleTaskAssigned,
-                  ),
-                ),
-            ],
+    return Scaffold(
+      backgroundColor: AppColors.background,
+      floatingActionButton: FloatingActionButton(
+        backgroundColor: AppColors.primary,
+        onPressed: _showAIChatDialog,
+        child: const Icon(Icons.auto_awesome, color: Colors.white),
+        tooltip: 'Спросить ИИ',
+      ),
+      body: Column(
+        children: [
+          AppHeader(
+            onProjectSelected: _onProjectSelected,
+            initialProject: _selectedProject,
           ),
-        ),
-      ],
-    ),
-  );
-}
+          Expanded(
+            child: Row(
+              children: [
+                SizedBox(
+                  width: 100,
+                  child: NavigationPanel(
+                    isTasksActive: true,
+                    isMembersActive: false,
+                    isRepositoryActive: false,
+                    onTasksTap: () {},
+                    onMembersTap: _navigateToMembers,
+                    showArchive: true, // ← ДОБАВИТЬ
+                    isArchiveActive: false,
+                    onArchiveTap: _navigateToArchive,
+                    onRepositoryTap: _navigateToRepository,
+                  ),
+                ),
+                if (_selectedProject != null)
+                  _isTaskSelected
+                      ? SizedBox(
+                          width: 250,
+                          child: TasksListPanel(
+                              projectId: _selectedProject!.id,
+                              selectedTaskId: _selectedTaskId,
+                              onTaskSelected: _selectTask,
+                              onAddTask: _startCreating,
+                              tasks: _tasks,
+                              onTasksUpdated: _refreshTasks,
+                              isCreating: _isCreating),
+                        )
+                      : Expanded(
+                          child: TasksListPanel(
+                              projectId: _selectedProject!.id,
+                              selectedTaskId: _selectedTaskId,
+                              onTaskSelected: _selectTask,
+                              onAddTask: _startCreating,
+                              tasks: _tasks,
+                              onTasksUpdated: _refreshTasks,
+                              isCreating: _isCreating),
+                        )
+                else
+                  const Expanded(
+                    child: Center(
+                      child: Text(
+                          'Нет существующих проектов. Создайте чтобы начать работу'),
+                    ),
+                  ),
+                if (_isTaskSelected)
+                  Expanded(
+                    child: Container(
+                      color: AppColors.background,
+                      padding: const EdgeInsets.only(top: 25, bottom: 25),
+                      child: _getDetailPanel(),
+                    ),
+                  ),
+                if (_isTaskSelected &&
+                    (_currentTaskDetails != null || _isCreating))
+                  SizedBox(
+                    width: 250,
+                    child: TaskInfoPanel(
+                      task: _isCreating
+                          ? (_currentUser != null
+                              ? TaskDetailResponse.empty(
+                                  projectId: _selectedProject!.id,
+                                  currentUser: _currentUser!,
+                                )
+                              : null)
+                          : _currentTaskDetails,
+                      trekking: _isCreating ? _emptyTrekking : _currentTrekking,
+                      onTaskUpdated: _handleTaskAssigned,
+                    ),
+                  ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 
   Widget _getDetailPanel() {
     if (_isCreating) {

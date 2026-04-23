@@ -37,6 +37,13 @@ class _MembersPageState extends State<MembersPage> {
   void _navigateToSettings() {
     Navigator.pushNamed(context, '/settings');
   }
+    void _navigateToArchive() {
+    Navigator.pushReplacementNamed(
+      context,
+      '/archive',
+      arguments: _selectedProject,
+    );
+  }
 
   @override
   void initState() {
@@ -176,6 +183,7 @@ class _MembersPageState extends State<MembersPage> {
           onRepositoryTap: _navigateToRepository,
           onProfileTap: _navigateToProfile,
           onSettingsTap: _navigateToSettings,
+          onArchiveTap: _navigateToArchive,
           isTasksActive: false,
           isMembersActive: true,
           isRepositoryActive: false,
@@ -238,9 +246,11 @@ class _MembersPageState extends State<MembersPage> {
         onRepositoryTap: _navigateToRepository,
         onProfileTap: _navigateToProfile,
         onSettingsTap: _navigateToSettings,
+        onArchiveTap: _navigateToArchive,
         isTasksActive: false,
         isMembersActive: true,
         isRepositoryActive: false,
+        isArchiveActive: false,
       ),
     );
   }
@@ -266,6 +276,9 @@ class _MembersPageState extends State<MembersPage> {
                     isTasksActive: false,
                     isMembersActive: true,
                     isRepositoryActive: false,
+                    showArchive: true, // ← ДОБАВИТЬ
+                    isArchiveActive: false,
+                    onArchiveTap: _navigateToArchive,
                     onTasksTap: _navigateToTasks,
                     onMembersTap: () {},
                     onRepositoryTap: _navigateToRepository,

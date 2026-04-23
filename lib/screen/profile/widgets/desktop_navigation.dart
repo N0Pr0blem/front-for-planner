@@ -56,6 +56,12 @@ class DesktopNavigation extends StatelessWidget {
             onTap: () => onSectionChanged('tracking'),
           ),
           _NavButton(
+            icon: Icons.workspace_premium, // ← НОВАЯ КНОПКА
+            label: 'Тарифы',
+            isActive: activeSection == 'pricing',
+            onTap: () => onSectionChanged('pricing'),
+          ),
+          _NavButton(
             icon: Icons.auto_awesome,
             label: 'Ответы ИИ',
             isActive: activeSection == 'ai',
